@@ -1,0 +1,8 @@
+# autoGitPush.ps1
+Set-Location "C:\Path\To\Your\UBot\Project" # Replace with your actual path
+$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+$commitMessage = "Auto-commit: $timestamp"
+
+git add .
+git commit -m $commitMessage
+git push origin main # Or your branch name
