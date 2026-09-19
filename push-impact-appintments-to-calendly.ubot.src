@@ -1,0 +1,251 @@
+	comment("===========================================")
+	comment("=== GLOBAL INIT ===")
+	comment("===========================================")
+	clear list(%virtualAppointments)
+	clear list(%seenLeadIds)
+	clear list(%dayDates)
+	clear list(%dayBlocks)
+	clear list(%apptBlocks)
+	clear list(%parts)
+	clear list(%nameParts)
+	set(#goPressed,"false","Global")
+	set(#booked,0,"Global")
+	set(#failed,0,"Global")
+	comment("===========================================")
+	comment("=== PHASE 1: NAVIGATE + WAIT FOR GO ===")
+	comment("===========================================")
+	navigate("https://impact.ailife.com/Home/Index","Wait")
+	wait for element(<id="menucontainer">,30,"")
+	ui button("GO") {
+	    set(#goPressed,"true","Global")
+	}
+	loop while($comparison(#goPressed,"=","false")) {
+	    wait(0.5)
+	}
+	alert("GO received - starting scrape")
+	comment("===========================================")
+	comment("=== SCRAPE ===")
+	comment("===========================================")
+	set(#diagText,$scrape attribute(<id="menucontainer">,"innertext"),"Global")
+	save to file("C:\\ubot\\ubotSees.txt",#diagText)
+	alert("UBot sees {$text length(#diagText)} characters")
+	set(#pageText,$scrape attribute(<id="menucontainer">,"innertext"),"Global")
+	save to file("C:\\ubot\\rawPageText.txt",#pageText)
+	alert("Length: {$text length(#pageText)}")
+	ScrapeCalendar()
+	alert("Scraped {$list total(%virtualAppointments)} virtual appointments")
+	SaveQueue()
+	comment("===========================================")
+	comment("=== PHASE 2: BOOK + SMS ===")
+	comment("===========================================")
+	ProcessQueue()
+	alert("Done. Booked: {#booked} Failed: {#failed}")
+	define ParseDeleteLink {
+	    set(#apptId,$replace regular expression(#href,".*DeleteSchedule\\((\\d+),.*","$1"),"Global")
+	    set(#leadId,$replace regular expression(#href,".*,\\s*(\\d+),\\s*'LeadAppointment'.*","$1"),"Global")
+	    set(#dayIdx,$replace regular expression(#href,".*'LeadAppointment'\\s*,\\s*(\\d+)\\s*,.*","$1"),"Global")
+	    set(#apptType,$replace regular expression(#href,".*'LeadAppointment'\\s*,\\s*\\d+\\s*,\\s*'([^']+)'.*","$1"),"Global")
+	}
+	define ParseApptSpan {
+	    set(#apptKind,$replace regular expression(#spanText,"([A-Za-z ]+):.*","$1"),"Global")
+	    set(#apptTime,$replace regular expression(#spanText,".*:\\s*([0-9:]+\\s*[AP]M).*","$1"),"Global")
+	    set(#address,$replace regular expression(#spanText,".*[AP]M\\s*(.*?)\\s*H:.*","$1"),"Global")
+	}
+	define IsVirtual {
+	    set(#isVirtualResult,"false","Global")
+	    if($contains($lower case(#apptType),"virtual")) {
+	        set(#isVirtualResult,"true","Global")
+	        then {
+	        }
+	        else {
+	        }
+	    }
+	}
+	define DedupeByLead {
+	    set(#isNewLead,"true","Global")
+	    set(#foundLead,"false","Global")
+	    set list position(%seenLeadIds,0)
+	    loop($list total(%seenLeadIds)) {
+	        set(#checkLead,$next list item(%seenLeadIds),"Global")
+	        if($comparison(#checkLead,"=",#leadId)) {
+	            set(#foundLead,"true","Global")
+	            then {
+	            }
+	            else {
+	            }
+	        }
+	    }
+	    if($comparison(#foundLead,"=","true")) {
+	        set(#isNewLead,"false","Global")
+	        then {
+	        }
+	        else {
+	        }
+	    }
+	    if($comparison(#foundLead,"=","false")) {
+	        add item to list(%seenLeadIds,#leadId,"","")
+	        then {
+	        }
+	        else {
+	        }
+	    }
+	}
+	define ResolveDate {
+	    set(#date,$list item(%dayDates,#dayIdx),"Global")
+	}
+	define GetAntiForgeryToken {
+	    set(#token,$scrape attribute(<name="__RequestVerificationToken">,"value"),"Global")
+	}
+	define BuildSmsBody {
+	    set(#smsBody,"Hi {#first}, this is NAPOLEON RUSS with AIL/NILICO. Friendly reminder of our virtual appointment at {#apptTime}. I will send the meeting link before we start. See you then!","Global")
+	}
+	define ParseDeleteLink {
+	    set(#apptId,$replace regular expression(#href,".*DeleteSchedule\\((\\d+),.*","$1"),"Global")
+	    set(#leadId,$replace regular expression(#href,".*,\\s*(\\d+),\\s*'LeadAppointment'.*","$1"),"Global")
+	    set(#dayIdx,$replace regular expression(#href,".*'LeadAppointment'\\s*,\\s*(\\d+)\\s*,.*","$1"),"Global")
+	    set(#apptType,$replace regular expression(#href,".*'LeadAppointment'\\s*,\\s*\\d+\\s*,\\s*'([^']+)'.*","$1"),"Global")
+	}
+	define BuildSmsBody {
+	    set(#smsBody,"Hi {#first}, this is NAPOLEON RUSS with AIL/NILICO. Friendly reminder of our virtual appointment at {#apptTime}. I will send the meeting link before we start. See you then!","Global")
+	}
+	define BookCalendly {
+	    set(#calendlySuccess,"false","Global")
+	    new browser()
+	}
+	define SendReminderSms {
+	    set(#smsSuccess,"false","Global")
+	    set(#httpPostResponse,$request("https://impact.ailife.com/Lead/SendSms","POST","number={#phone}&text={#smsBody}&ToUserId=661286&__RequestVerificationToken={#token}","Content-type: application/x-www-form-urlencoded"),"Global")
+	    if($contains(#httpPostResponse,"\"IsSuccess\":true")) {
+	        set(#smsSuccess,"true","Global")
+	        then {
+	        }
+	        else {
+	        }
+	    }
+	}
+	define SaveQueue {
+	    save to file("C:\\ubot\\queue.txt",%virtualAppointments)
+	}
+	define ScrapeCalendar {
+	    clear list(%allAppointments)
+	    clear list(%seenLeadIds)
+	    set(#pageText,$scrape attribute(<id="menucontainer">,"innertext"),"Global")
+	    save to file("C:\\ubot\\ubotSees.txt",#pageText)
+	    comment("Split the entire page into appointment blocks on the word delete")
+	    clear list(%blocks)
+	    add list to list(%blocks,$list from text(#pageText,"delete"),"Delete","Global")
+	    alert("Total blocks: {$list total(%blocks)}")
+	    set(#bIdx,0,"Global")
+	    loop($list total(%blocks)) {
+	        set(#blockText,$list item(%blocks,#bIdx),"Global")
+	        comment("Skip blocks that are too short to be real appointments")
+	        if($comparison($text length(#blockText),">",40)) {
+	            comment("Determine appointment type by looking for the keyword")
+	            set(#apptType,"","Global")
+	            set(#apptDetail,"","Global")
+	            if($contains(#blockText,"APPT:")) {
+	                set(#apptType,"APPT","Global")
+	                set(#apptDetail,"APPT:","Global")
+	                then {
+	                }
+	                else {
+	                }
+	            }
+	            if($contains(#blockText,"Call back:")) {
+	                set(#apptType,"CallBack","Global")
+	                set(#apptDetail,"Call back:","Global")
+	                then {
+	                }
+	                else {
+	                }
+	            }
+	            if($contains(#blockText,"Drop By:")) {
+	                set(#apptType,"DropBy","Global")
+	                set(#apptDetail,"Drop By:","Global")
+	                then {
+	                }
+	                else {
+	                }
+	            }
+	            comment("If we recognized a type, extract the fields")
+	            if($comparison(#apptType,"!=","")) {
+	                comment("Split the block on the detail keyword - text before is name, after is time+addr+phone")
+	                clear list(%typeSplit)
+	                add list to list(%typeSplit,$list from text(#blockText,#apptDetail),"Delete","Global")
+	                set(#beforeDetail,$list item(%typeSplit,0),"Global")
+	                set(#afterDetail,$list item(%typeSplit,1),"Global")
+	                comment("Name is the tail of beforeDetail - take the last line")
+	                comment("Since UBot innertext preserves newlines, split on the line-break pattern")
+	                comment("Fallback: use the last 60 chars and take the meaningful part")
+	                set(#nameRaw,#beforeDetail,"Global")
+	                comment("Phone: split afterDetail on M: or H:")
+	                clear list(%phoneSplit)
+	                if($contains(#afterDetail,"M:")) {
+	                    add list to list(%phoneSplit,$list from text(#afterDetail,"M:"),"Delete","Global")
+	                    then {
+	                    }
+	                    else {
+	                    }
+	                }
+	                if($contains(#afterDetail,"H:")) {
+	                    add list to list(%phoneSplit,$list from text(#afterDetail,"H:"),"Delete","Global")
+	                    then {
+	                    }
+	                    else {
+	                    }
+	                }
+	                set(#phoneRaw,$list item(%phoneSplit,1),"Global")
+	                comment("Time and address: everything in afterDetail before the M:/H:")
+	                set(#timeAddrRaw,$list item(%phoneSplit,0),"Global")
+	                comment("Is this appointment virtual?")
+	                set(#isVirt,"false","Global")
+	                if($contains(#blockText,"Virtual")) {
+	                    set(#isVirt,"true","Global")
+	                    then {
+	                    }
+	                    else {
+	                    }
+	                }
+	                comment("Store: type|isVirtual|name|phone|timeAddr")
+	                add item to list(%allAppointments,"{#apptType}|{#isVirt}|{#nameRaw}|{#phoneRaw}|{#timeAddrRaw}","","")
+	                then {
+	                }
+	                else {
+	                }
+	            }
+	            then {
+	            }
+	            else {
+	            }
+	        }
+	        increment(#bIdx)
+	    }
+	    alert("Captured {$list total(%allAppointments)} appointments total")
+	    comment("Now filter to just the virtual ones for Calendly booking")
+	    clear list(%virtualAppointments)
+	    set list position(%allAppointments,0)
+	    loop($list total(%allAppointments)) {
+	        set(#apptRow,$next list item(%allAppointments),"Global")
+	        if($contains(#apptRow,"|true|")) {
+	            add item to list(%virtualAppointments,#apptRow,"","")
+	            then {
+	            }
+	            else {
+	            }
+	        }
+	    }
+	    alert("Virtual appointments to book: {$list total(%virtualAppointments)}")
+	}
+	define ProcessCallBacks {
+	    set list position(%allAppointments,0)
+	    loop($list total(%allAppointments)) {
+	        set(#row,$next list item(%allAppointments),"Global")
+	        if($contains(#row,"CallBack|")) {
+	            comment("Add to task list, or create calendar event, or whatever")
+	            then {
+	            }
+	            else {
+	            }
+	        }
+	    }
+	}
