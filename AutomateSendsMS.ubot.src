@@ -1,7 +1,7 @@
 comment("=== Build today's date string (using JavaScript - cleaner & more reliable) ===")
 comment("=== Scrape today's date ===")
 set(#rawDate,$date,"Global")
-comment("Example1: #rawDate = '09/17/2026'")
+comment("Example: #rawDate = '09/17/2026'")
 comment("=== Clear then rebuild dateParts ===")
 clear list(%dateParts)
 add list to list(%dateParts,$list from text(#rawDate,"/"),"Delete","Global")
@@ -26,7 +26,7 @@ comment("Build the full marker as it appears in pageData")
 set(#todayMarker,"Send Text on {#todayStr}","Global")
 comment("Build the full marker as it appears in pageData")
 comment("*************** END Build TodAY DATE************")
-set(#url,"https://mobile.impact.ailife.com/Lead/Index","Global")
+set(#url,"https://mobile.impact.ailife.com/","Global")
 navigate(#url,"Wait")
 alert("Navigate to the first lead detail card and then press the 'GO' Button...")
 comment("=== 1. Initialize the control variable ===")
@@ -98,20 +98,21 @@ loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLead
             click($element offset(<onclick="SendText(); return false;">,0),"Left Click","No")
             wait(2)
             comment("--- Fallback: Call Back logic if Send Text fails ---")
-            if($not($exists(<id="primaryPanel">))) {
-                then {
-                    comment("=== CALL BACK LOGIC ===")
-                    set(#url,"https://mobile.impact.ailife.com/Lead/SetAppointment?appointmenttype=CallBack&leadid={#leadid}","Global")
-                    navigate(#url,"Wait")
-                    set(#url,"https://mobile.impact.ailife.com/Lead/SetAppointment?appointmenttype=CallBack&leadid={#leadid}&WorkflowProcessTypeId=3#","Global")
-                    navigate(#url,"Wait")
-                    wait for browser event("Everything Loaded","")
-                    wait(2)
-                }
-                else {
-                    comment("Back on detail page — Send Text appears to have worked or page is still present")
-                }
-            }
+            comment("=== CALL BACK LOGIC ===")
+set(#warnedUser,"false","Global")
+
+loop while($not($exists(<id="primaryPanel">))) {
+    comment("=== NOT ON DETAIL PAGE — ENTERING RECOVERY LOOP ===")
+
+    if($comparison(#warnedUser,"=","false")) {
+        then {
+            alert("The detail page did not load. Please manually click the disposition buttons to return to the detail page. The bot will resume automatically once it detects the page.")
+            set(#warnedUser,"true","Global")
+        }
+        else {
+            comment("Already warned user — staying silent")
+        }
+    }	}
         }
     }
     comment("=== Read the record counter ===")
