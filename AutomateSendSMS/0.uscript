@@ -26,7 +26,7 @@ set(#maxLeads,100,"Global")
 set(#firstLead,"true","Global")
 comment("=== Main processing loop ===")
 loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLeads))) {
-    WaitForDetailPage()
+    WaitForDetailPage(60)
     if($comparison(#firstLead,"=","false")) {
         then {
             click($element offset(<onclick=w"*/Lead/MoveNext*">,0),"Left Click","No")
@@ -45,7 +45,6 @@ loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLead
             set(#skipRecord,"Yes","Global")
         }
         else {
-            alert("Processing Record")
             comment("=== Extract phone numbers ===")
             set(#mobileBlock,$page scrape("Mobile:","Home:"),"Global")
             set(#mobile,$trim($strip tags(#mobileBlock)),"Global")
@@ -87,6 +86,7 @@ loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLead
                     if($comparison(#onDetailPage,"=","false")) {
                         then {
                             alert("Automated Disposition Setting Failed- Manually Chose Disposition to Proceed ")
+                            TimedWaitForDetailPage(30)
                         }
                         else {
                             comment("Do Nothing")

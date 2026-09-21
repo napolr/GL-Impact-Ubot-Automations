@@ -14,7 +14,7 @@ define ScrapeCalendar {
         comment("Precompute the flags — do not use $contains inline in the if")
         set(#containsAPPT,$contains(#blockText,"APPT:"),"Local")
         set(#containsVirtual,$contains(#blockText,"Virtual"),"Local")
-        ParseApptWithAI()
+        ParseApptWithAI2()
         increment(#bIdx)
     }
     alert("Total appointments: {$list total(%allAppointments)}")

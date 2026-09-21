@@ -4,6 +4,7 @@ define scheduleCallBack {
     comment("By panel-body inside Next Day — offset 2 because Later Today and Tomorrow come first")
     set(#url,"https://mobile.impact.ailife.com/Lead/SetAppointment?appointmenttype=CallBack&leadid={#leadid}","Global")
     navigate(#url,"Wait")
+    wait(2)
     set(#url,"https://mobile.impact.ailife.com/Lead/SetAppointment?appointmenttype=CallBack&leadid={#leadid}&WorkflowProcessTypeId=3#","Global")
     navigate(#url,"Wait")
     wait for browser event("Everything Loaded","")

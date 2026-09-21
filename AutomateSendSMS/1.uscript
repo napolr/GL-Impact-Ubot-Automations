@@ -1,22 +1,6 @@
-define WaitForDetailPage {
-    set(#attempts,0,"Local")
-    set(#onDetailPage,"false","Global")
-    loop while($comparison(#onDetailPage,"=","false")) {
-        if($comparison(#attempts,">",60)) {
-            then {
-                alert("Timed out after 60 attempts waiting for Detail page")
-                stop script
-            }
-        }
-        increment(#attempts)
-        wait(1)
-        IsDetailPage()
-    }
-}
 define IsDetailPage {
     set(#headerText,$scrape attribute(<class="container-fluid pgname">,"innertext"),"Local")
     set(#headerTextLowerCase,$change text casing($trim(#headerText),"Lower Case"),"Local")
-    comment("Check both the header text and the URL")
     if($contains(#headerTextLowerCase,"detail")) {
         then {
             set(#onDetailPage,"true","Global")
@@ -26,4 +10,29 @@ define IsDetailPage {
         }
     }
     return(#onDetailPage)
+}
+define WaitForDetailPage(#loopCount) {
+    if($comparison(#loopCount,"=","")) {
+        then {
+            set(#loopCount,60,"Local")
+        }
+    }
+    set(#attempts,0,"Local")
+    set(#done,"false","Local")
+    loop(#loopCount) {
+        increment(#attempts)
+        wait(1)
+        set(#done,$IsDetailPage(),"Local")
+        if($comparison(#done,"=","true")) {
+            then {
+                break()
+            }
+        }
+    }
+    if($comparison(#done,"=","false")) {
+        then {
+            alert("Waited {#attempts} seconds - Detail Page Not Found")
+        }
+    }
+    return(#done)
 }
