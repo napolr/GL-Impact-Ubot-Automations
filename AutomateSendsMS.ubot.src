@@ -1,34 +1,9 @@
-comment("=== Build today's date string (using JavaScript - cleaner & more reliable) ===")
-comment("=== Scrape today's date ===")
-set(#rawDate,$date,"Global")
-comment("Example: #rawDate = '09/17/2026'")
-comment("=== Clear then rebuild dateParts ===")
-clear list(%dateParts)
-add list to list(%dateParts,$list from text(#rawDate,"/"),"Delete","Global")
-comment("=== Read the parts ===")
-set(#monthNum,$trim($list item(%dateParts,0)),"Global")
-set(#dayNum,$trim($list item(%dateParts,1)),"Global")
-comment("=== #yearNum currently = '2026 18:57:10' ===")
-set(#yearNum,$trim($list item(%dateParts,2)),"Global")
-comment("=== Clear then rebuild yearParts, splitting on space ===")
-clear list(%yearParts)
-add list to list(%yearParts,$list from text(#yearNum," "),"Delete","Global")
-comment("=== Read the first part (the year) ===")
-set(#yearNum,$trim($list item(%yearParts,0)),"Global")
-set(#yearNum,$substring(#yearNum,0,4),"Global")
-add list to list(%months,$list from text("Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",","),"Delete","Global")
-comment("Look up month abbreviation — list is 0-indexed")
-set(#monthIdx,$subtract(#monthNum,1),"Global")
-set(#monthAbbr,$list item(%months,#monthIdx),"Global")
-comment("Build today's date string in the page's format")
-set(#todayStr,"{#monthAbbr} {#dayNum} {#yearNum}","Global")
-comment("Build the full marker as it appears in pageData")
-set(#todayMarker,"Send Text on {#todayStr}","Global")
-comment("Build the full marker as it appears in pageData")
-comment("*************** END Build TodAY DATE************")
-set(#url,"https://mobile.impact.ailife.com/","Global")
+clear all data
+getTodayMarker()
+set(#url,"https://mobile.impact.ailife.com/Lead/Inbox","Global")
 navigate(#url,"Wait")
 alert("Navigate to the first lead detail card and then press the 'GO' Button...")
+click($element offset(<href=w"*InboxDetail*">,0),"Left Click","No")
 comment("=== 1. Initialize the control variable ===")
 set(#goPressed,"False","Global")
 comment("=== 2. Create the 'Go' button ===")
@@ -44,21 +19,24 @@ loop while($comparison(#goPressed,"=","False")) {
 comment("=== 4. Execution resumes here after the button is clicked ===")
 alert("GO was pressed! Continuing with the script...")
 comment("... your record processing loop goes here ...")
-set(#url,"https://mobile.impact.ailife.com/Lead/InboxDetail?LeadId={#leadid}","Global")
-wait(10)
 comment("Result example: 'Send Text on Sep 17 2026'")
-set(#url,"https://mobile.impact.ailife.com/Lead/InboxDetail?LeadId={#leadid}","Global")
-wait(10)
 set(#hasNext,"Yes","Global")
 set(#count,0,"Global")
 set(#maxLeads,100,"Global")
+set(#firstLead,"true","Global")
 comment("=== Main processing loop ===")
 loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLeads))) {
-    increment(#count)
-    click($element offset(<onclick=w"*/Lead/MoveNext*">,0),"Left Click","No")
-    comment("=== Wait for detail panel ===")
-    wait for element(<id="primaryPanel">,30,"")
-    wait(1)
+    WaitForDetailPage()
+    if($comparison(#firstLead,"=","false")) {
+        then {
+            click($element offset(<onclick=w"*/Lead/MoveNext*">,0),"Left Click","No")
+        }
+        else {
+            set(#firstLead,"false","Global")
+        }
+    }
+    set(#sendTextCompleted,"false","Global")
+    comment("Get the lead information")
     run javascript("document.querySelector('#LeadTable tbody tr td a').click();")
     set(#pageData,$scrape attribute(<id="primaryPanel">,"innertext"),"Global")
     if($contains(#pageData,#todayMarker)) {
@@ -67,6 +45,7 @@ loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLead
             set(#skipRecord,"Yes","Global")
         }
         else {
+            alert("Processing Record")
             comment("=== Extract phone numbers ===")
             set(#mobileBlock,$page scrape("Mobile:","Home:"),"Global")
             set(#mobile,$trim($strip tags(#mobileBlock)),"Global")
@@ -99,20 +78,25 @@ loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLead
             wait(2)
             comment("--- Fallback: Call Back logic if Send Text fails ---")
             comment("=== CALL BACK LOGIC ===")
-set(#warnedUser,"false","Global")
-
-loop while($not($exists(<id="primaryPanel">))) {
-    comment("=== NOT ON DETAIL PAGE — ENTERING RECOVERY LOOP ===")
-
-    if($comparison(#warnedUser,"=","false")) {
-        then {
-            alert("The detail page did not load. Please manually click the disposition buttons to return to the detail page. The bot will resume automatically once it detects the page.")
-            set(#warnedUser,"true","Global")
-        }
-        else {
-            comment("Already warned user — staying silent")
-        }
-    }	}
+            set(#warnedUser,"false","Global")
+            IsDetailPage()
+            if($comparison(#onDetailPage,"=","false")) {
+                then {
+                    comment("SendTextFailed - try to automatically set callback")
+                    scheduleCallBack()
+                    if($comparison(#onDetailPage,"=","false")) {
+                        then {
+                            alert("Automated Disposition Setting Failed- Manually Chose Disposition to Proceed ")
+                        }
+                        else {
+                            comment("Do Nothing")
+                        }
+                    }
+                }
+                else {
+                    comment("Already warned user — staying silent")
+                }
+            }
         }
     }
     comment("=== Read the record counter ===")
@@ -122,5 +106,5 @@ loop while($not($exists(<id="primaryPanel">))) {
     set(#counterLeft,$trim($list item(%counterParts,0)),"Global")
     set(#counterRight,$trim($list item(%counterParts,1)),"Global")
     comment("Optional: Add logic here to set #hasNext = \"No\" when you reach the end")
+    increment(#count)
 }
-comment("=== End of script ===")
