@@ -1,0 +1,24 @@
+define ParseApptWithAI {
+    set(#openaiPrompt,"{#promptTemplate}\r\n\r\nAPPOINTMENT HTML:\r\n{#blockText}","Global")
+    alert("in ParsewithAI _ before replace")
+    WriteEncodedBodyToFile()
+    comment(" Write the prompt to a temp file (avoids all quoting problems")
+    alert("wrote body to file- check it ")
+    save to file("C:\\ubot\\temp_prompt.txt",#openaiPrompt)
+    comment(" 2. Let Python create a valid JSON body")
+    run python("import json
+body = \{\'model\': \'gpt-4o\', \'input\': \'\'\'\{#openaiPrompt\}\'\'\'\}
+encoded = json.dumps(body)
+with open(\'C:/ubot/encoded_body.json\', \'w\') as f:
+    f.write(encoded)")
+    set(#openaiBody,$read file("C:\\ubot\\encoded_body.json"),"Global")
+}
+comment(" Python now only has to read a file — no embedding issues")
+set(#openaiRawResponse,$request(#openaiUrl,"POST",#openaiBody,#authString),"Global")
+save to file("C:\\ubot\\openaiResponse.txt",#openaiResponse)
+clear list(%aiFields)
+add list to list(%aiFields,$list from text(#aiResponse,"|"),"Delete","Global")
+set(#nameRaw,$list item(%aiFields,0),"Global")
+set(#phoneRaw,$list item(%aiFields,1),"Global")
+set(#apptTime,$list item(%aiFields,2),"Global")
+set(#addressRaw,$list item(%aiFields,3),"Global")

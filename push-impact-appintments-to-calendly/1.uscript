@@ -1,0 +1,22 @@
+define ScrapeCalendar {
+    ConfigureOpenAI()
+    ConfigurePrompts()
+    wait for element(<id="menucontainer">,30,"")
+    clear list(%allAppointments)
+    clear list(%virtualAppointments)
+    set(#pageText,$scrape attribute(<id="menucontainer">,"outerhtml"),"Global")
+    save to file("C:\\ubot\\ubotSees.txt",#pageText)
+    clear list(%blocks)
+    add list to list(%blocks,$list from text(#pageText,"seperatorDiv_"),"Delete","Global")
+    set(#bIdx,0,"Global")
+    loop($list total(%blocks)) {
+        set(#blockText,$list item(%blocks,#bIdx),"Global")
+        comment("Precompute the flags — do not use $contains inline in the if")
+        set(#containsAPPT,$contains(#blockText,"APPT:"),"Local")
+        set(#containsVirtual,$contains(#blockText,"Virtual"),"Local")
+        ParseApptWithAI()
+        increment(#bIdx)
+    }
+    alert("Total appointments: {$list total(%allAppointments)}")
+    alert("Virtual appointments: {$list total(%virtualAppointments)}")
+}

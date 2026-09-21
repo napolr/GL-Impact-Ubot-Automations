@@ -1,0 +1,15 @@
+define ConfigureOpenAI {
+    alert("Running  ConfigureOpenAI")
+    comment("Load the key from a file outside the repo")
+    set(#apiKey,$read file("C:\\ubot\\secrets\\openai.key"),"Global")
+    ConfigurePrompts()
+    set(#apiKey,$trim(#apiKey),"Global")
+    comment("Build the Authorization header value")
+    set(#authString,"Authorization = Bearer {#apiKey}","Global")
+    comment("Build the full header block for HTTP requests")
+    set(#openaiHeaders,"Authorization: Bearer {#apiKey}{$new line}Content-Type: application/json","Global")
+    comment("Default model — change here to affect every call")
+    set(#openaiModel,"gpt-4o","Global")
+    comment("OpenAI endpoint — swap here if you use Chat Completions instead")
+    set(#openaiUrl,"https://api.openai.com/v1/responses","Global")
+}

@@ -1,0 +1,4 @@
+define ConfigurePrompts {
+    set(#promptTemplate,$read file("C:\\ubot\\prompts\\impact_appointment_parser_ai_prompt.txt"),"Global")
+    set(#openaiJSONTemplate,$read file("C:\\ubot\\api_template.json"),"Global")
+}

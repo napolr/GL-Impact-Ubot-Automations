@@ -1,0 +1,29 @@
+define DedupeByLead {
+    set(#isNewLead,"true","Global")
+    set(#foundLead,"false","Global")
+    set list position(%seenLeadIds,0)
+    loop($list total(%seenLeadIds)) {
+        set(#checkLead,$next list item(%seenLeadIds),"Global")
+        if($comparison(#checkLead,"=",#leadId)) {
+            set(#foundLead,"true","Global")
+            then {
+            }
+            else {
+            }
+        }
+    }
+    if($comparison(#foundLead,"=","true")) {
+        set(#isNewLead,"false","Global")
+        then {
+        }
+        else {
+        }
+    }
+    if($comparison(#foundLead,"=","false")) {
+        add item to list(%seenLeadIds,#leadId,"","")
+        then {
+        }
+        else {
+        }
+    }
+}

@@ -1,0 +1,55 @@
+define NormalizeDateTime {
+    comment("STEP 2B FIXED: CALL A HELPER INSTEAD OF SETTING INLINE")
+    set(#month,"2026-09","Global")
+    set(#hour24,14,"Global")
+    set(#mins,00,"Global")
+    if($comparison(#apptDate,"=","")) {
+        NormalizeDateFallback()
+        then {
+        }
+        else {
+        }
+    }
+    set(#apptTime24,"{#hour24}:{#mins}","Global")
+}
+define NormalizeDateFallback {
+    comment("Get the full date string")
+    set(#apptTime,$date format("yyyy-MM-dd"),"")
+}
+define BuildCalendlyUrl {
+    set(#tzOffset,"-04:00","Global")
+    set(#isoStart,"{#apptDate}T{#apptTime24}:00{#tzOffset}","Global")
+    set(#nameEnc,$replace(#apptName," ","%20"),"Global")
+    set(#phoneDigits,$replace regular expression(#phone,"[^0-9]",""),"Global")
+    set(#a1Raw,"Phone: {#phoneDigits}","Global")
+    set(#a1Enc,$replace($replace(#a1Raw,":","%3A")," ","%20"),"Global")
+    set(#calendlyUrl,"https://calendly.com/napoleonruss13/30Min/{#isoStart}?name={#nameEnc}&email=noemail%40example.com&a1={#a1Enc}&month={#month}&date={#apptDate}","Global")
+    append to file("C:\\ubot\\calendly_urls.log","{#calendlyUrl}{$new line}","")
+}
+define ResolveDate {
+    set(#date,$list item(%dayDates,#dayIdx),"Global")
+}
+define GetAntiForgeryToken {
+    set(#token,$scrape attribute(<name="__RequestVerificationToken">,"value"),"Global")
+}
+define BookCalendly {
+    set(#calendlySuccess,"false","Global")
+    new browser()
+}
+define OpenCalendlyForBooking {
+    set(#calendlySuccess,"false","Global")
+    new browser()
+    navigate(#calendlyUrl,"Wait")
+    wait for browser event("Everything Loaded","")
+    wait(2)
+    alert("Please book this appointment in the Calendly window.
+
+Lead:  {#apptName}
+Time:  {#apptTime} on {#apptDate}
+Phone: {#phone}
+URL:   {#calendlyUrl}
+
+Click the time slot, then click Confirm.
+When the booking is confirmed, come back here and click OK.")
+    set(#calendlySuccess,"true","Global")
+}

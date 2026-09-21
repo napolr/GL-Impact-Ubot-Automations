@@ -1,0 +1,15 @@
+define UnescapeJson {
+    comment("Input: #openaiResponseText")
+    comment("Output: #openaiResponseText with \\n and \\\" unescaped, then trimmed")
+    comment("Build the escape sequences from character codes so UBot parses them cleanly")
+    set(#bslash,$character(92),"Global")
+    set(#quote,$character(34),"Global")
+    comment("Replace literal backslash-n with a space")
+    set(#bslashN,"{#bslash}n","Global")
+    set(#openaiResponseText,$replace(#openaiResponseText,#bslashN," "),"Global")
+    comment("Replace literal backslash-quote with a plain quote")
+    set(#bslashQuote,"{#bslash}{#quote}","Global")
+    set(#openaiResponseText,$replace(#openaiResponseText,#bslashQuote,#quote),"Global")
+    comment("Trim leading and trailing whitespace")
+    set(#openaiResponseText,$trim(#openaiResponseText),"Global")
+}

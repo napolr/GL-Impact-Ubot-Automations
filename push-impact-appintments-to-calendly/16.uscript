@@ -1,0 +1,17 @@
+define WriteEncodedBodyToFile {
+    comment("Input: #openaiPrompt")
+    comment("Output: writes C:\\ubot\\encoded_body.json")
+    comment("Build the Python script as a UBot string — this substitutes the prompt")
+    set(#pyCode,"import json","Local")
+    set(#pyCode,"\{#pyCode\}\{$new line()\}body = \{\'model\': \'gpt-4o\', \'input\': \'\'","Local")
+    set(#pyCode,"{#pyCode}{#openaiPrompt}","Local")
+    set(#pyCode,"\{#pyCode\}\'\'\'\}","Local")
+    set(#pyCode,"\{#pyCode\}\{$new line()\}encoded = json.dumps(body)","Local")
+    set(#pyCode,"\{#pyCode\}\{$new line()\}f = open(\'C:/ubot/encoded_body.json\', \'w\')","Local")
+    set(#pyCode,"\{#pyCode\}\{$new line()\}f.write(encoded)","Local")
+    set(#pyCode,"\{#pyCode\}\{$new line()\}f.close()","Local")
+    save to file("C:\\ubot\\pyCode_debug.txt",#pyCode)
+    comment("Run it")
+    run python(#pyCode)
+    alert("Python ran. Check C:\\ubot\\encoded_body.json")
+}

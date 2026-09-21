@@ -1,0 +1,27 @@
+define CallOpenAI {
+    alert("Begin CallOpenAI")
+    ConfigureOpenAI()
+    comment("Inputs:  #openaiPrompt, #openaiUrl, #openaiHeaders, #openaiModel")
+    comment("Output:  #openaiResponseText")
+    comment("Guard against blank or too-short prompts")
+    if($comparison($text length($trim(#openaiPrompt)),"<",10)) {
+        set(#openaiResponseText,"","Global")
+        alert("CallOpenAI skipped: prompt is blank or too short")
+        then {
+        }
+        else {
+            comment("Send the request to OpenAI")
+            alert("About to format JSON")
+            comment("Read the template")
+            alert("about to make the api call")
+            set(#openaiRawResponse,$request(#openaiUrl,"POST",#encodedRequestBody,#authString),"Global")
+            comment("Save the raw response for debugging")
+            save to file("C:\\ubot\\openai_lastResponse.json",#openaiRawResponse)
+            comment("Extract the output_text field from the JSON response")
+            set(#openaiResponseText,$replace regular expression(#openaiRawResponse,"(?s).*?\"output_text\"\\s*:\\s*\"(.*?)\".*","$1"),"Global")
+            comment("Unescape any JSON escapes and trim whitespace")
+            UnescapeJson()
+            alert("AI response: {#openaiResponseText}")
+        }
+    }
+}

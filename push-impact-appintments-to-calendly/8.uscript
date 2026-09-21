@@ -1,0 +1,12 @@
+define BuildSmsBody {
+    set(#smsBody,"Hi {#first}, this is NAPOLEON RUSS with AIL/NILICO. Friendly reminder of our virtual appointment at {#apptTime}. I will send the meeting link before we start. See you then!","Global")
+}
+define ParseDeleteLink {
+    set(#apptId,$replace regular expression(#href,".*DeleteSchedule\\((\\d+),.*","$1"),"Global")
+    set(#leadId,$replace regular expression(#href,".*,\\s*(\\d+),\\s*'LeadAppointment'.*","$1"),"Global")
+    set(#dayIdx,$replace regular expression(#href,".*'LeadAppointment'\\s*,\\s*(\\d+)\\s*,.*","$1"),"Global")
+    set(#apptType,$replace regular expression(#href,".*'LeadAppointment'\\s*,\\s*\\d+\\s*,\\s*'([^']+)'.*","$1"),"Global")
+}
+define BuildSmsBody {
+    set(#smsBody,"Hi {#first}, this is NAPOLEON RUSS with AIL/NILICO. Friendly reminder of our virtual appointment at {#apptTime}. I will send the meeting link before we start. See you then!","Global")
+}
