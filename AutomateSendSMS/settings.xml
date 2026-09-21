@@ -1,0 +1,65 @@
+<Settings>
+  <Version>8</Version>
+  <CodeVersion>1</CodeVersion>
+  <TableDelimeter>,</TableDelimeter>
+  <CompiledBotWidth>950</CompiledBotWidth>
+  <CompiledBotHeight>650</CompiledBotHeight>
+  <CompiledBotStartupMode>Normal</CompiledBotStartupMode>
+  <CompiledBotCaptchaServicesIncluded>Included</CompiledBotCaptchaServicesIncluded>
+  <CompiledBotOutputFile>C:\Users\napol\Downloads\automateSendText.exe</CompiledBotOutputFile>
+  <CompiledBotUIColor>#FF000000</CompiledBotUIColor>
+  <CompiledBotUIColorEnabled>false</CompiledBotUIColorEnabled>
+  <CompiledBotBackgroundTabColor>#FF000000</CompiledBotBackgroundTabColor>
+  <CompiledBotBackgroundTabColorEnabled>false</CompiledBotBackgroundTabColorEnabled>
+  <CompiledBotMenuColor>#FF000000</CompiledBotMenuColor>
+  <CompiledBotMenuColorEnabled>false</CompiledBotMenuColorEnabled>
+  <CompiledBotActiveTabColor>#FF000000</CompiledBotActiveTabColor>
+  <CompiledBotActiveTabColorEnabled>false</CompiledBotActiveTabColorEnabled>
+  <CompiledBotInactiveTabColor>#FF000000</CompiledBotInactiveTabColor>
+  <CompiledBotInactiveTabColorEnabled>false</CompiledBotInactiveTabColorEnabled>
+  <CompiledBotMouseoverTabColor>#FF000000</CompiledBotMouseoverTabColor>
+  <CompiledBotMouseoverTabColorEnabled>false</CompiledBotMouseoverTabColorEnabled>
+  <CompiledBotRemoveBranding>false</CompiledBotRemoveBranding>
+  <CompiledBotHideRunBar>false</CompiledBotHideRunBar>
+  <CompiledBotHideNavigationBar>false</CompiledBotHideNavigationBar>
+  <CompiledBotHideBrowser>false</CompiledBotHideBrowser>
+  <CompiledBotHideMenu>false</CompiledBotHideMenu>
+  <CompiledBotHideWindow>false</CompiledBotHideWindow>
+  <CompiledBotAffiliateNumber />
+  <CompiledBotSplashPage></CompiledBotSplashPage>
+  <CompiledBotOutputFile>C:\Users\napol\Downloads\automateSendText.exe</CompiledBotOutputFile>
+  <CompiledBotIcon></CompiledBotIcon>
+  <CompiledBotLicenseAgreement></CompiledBotLicenseAgreement>
+  <CompiledBotSoftwareName>Software Name</CompiledBotSoftwareName>
+  <CompiledBotBannerImage></CompiledBotBannerImage>
+  <CompiledBotSetupOutputFile></CompiledBotSetupOutputFile>
+  <CompiledBotIncludedInterfaces>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+  </CompiledBotIncludedInterfaces>
+  <CompiledBotSchedulableCommands />
+  <Scripts>
+    <Script name="main" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+    <Script name="WaitForDetailPage" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+    <Script name="gettodayMarker" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+    <Script name="scheduleCallBack" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+  </Scripts>
+</Settings>
