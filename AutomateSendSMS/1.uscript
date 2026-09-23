@@ -1,12 +1,58 @@
-define scheduleCallBack {
-    comment("=== CALL BACK LOGIC ===")
-    comment("Click Set Call Back anchor")
-    comment("By panel-body inside Next Day — offset 2 because Later Today and Tomorrow come first")
-    set(#url,"https://mobile.impact.ailife.com/Lead/SetAppointment?appointmenttype=CallBack&leadid={#leadid}","Global")
-    navigate(#url,"Wait")
-    wait(2)
-    set(#url,"https://mobile.impact.ailife.com/Lead/SetAppointment?appointmenttype=CallBack&leadid={#leadid}&WorkflowProcessTypeId=3#","Global")
-    navigate(#url,"Wait")
-    wait for browser event("Everything Loaded","")
-    wait(2)
+define $IsDetailPage {
+    comment("Safe Detail page detection with testing alerts")
+
+    set(#headerText,"","Local")
+    set(#pageContent,"","Local")
+
+    // ----- 1. Try to scrape the header safely -----
+    if($exists(<class=w"*pgname*">)) {
+        then {
+            set(#headerText,$scrape attribute(<class=w"*pgname*">,"innertext"),"Local")
+            set(#headerText,$change text casing($trim(#headerText),"Lower Case"),"Local")
+            alert("Header found: {#headerText}")
+        }
+        else {
+            alert("Header element (pgname) NOT found")
+        }
+    }
+
+    // Check header first
+    if($contains(#headerText,"detail")) {
+        then {
+            alert("→ Detail page detected via HEADER")
+            set(#onDetailPage,"true","Global")
+            return("true")
+        }
+    }
+
+    // ----- 2. Fallback: check primaryPanel -----
+    if($exists(<id="primaryPanel">)) {
+        then {
+            set(#pageContent,$scrape attribute(<id="primaryPanel">,"innertext"),"Local")
+            set(#pageContent,$change text casing($trim(#pageContent),"Lower Case"),"Local")
+            
+            // Show only first 120 characters to keep the alert readable
+            set(#preview,$find regular expression(#pageContent,"^.{0,120}"),"Local")
+            alert("PrimaryPanel preview: {#preview}")
+
+            if($contains(#pageContent,"mobile:")) {
+                then {
+                    alert("→ Detail page detected via PRIMARY PANEL")
+                    set(#onDetailPage,"true","Global")
+                    return("true")
+                }
+                else {
+                    alert("PrimaryPanel exists but does NOT contain 'mobile:'")
+                }
+            }
+        }
+        else {
+            alert("primaryPanel element NOT found")
+        }
+    }
+
+    // ----- 3. Not a detail page -----
+    alert("→ NOT a Detail page")
+    set(#onDetailPage,"false","Global")
+    return("false")
 }

@@ -1,0 +1,21 @@
+define $WaitForDetailPage(#loopCount) {
+    comment("Default to 60 if no count provided")
+    if($comparison(#loopCount,"=","")) {
+        then {
+            set(#loopCount,60,"Local")
+        }
+    }
+    set(#attempts,0,"Local")
+    loop(#loopCount) {
+        increment(#attempts)
+        wait(1)
+        alert("Calling IsDetailPage")
+        if($comparison($IsDetailPage(),"=","true")) {
+            then {
+                return("true")
+            }
+        }
+    }
+    alert("Waited {#attempts} seconds - Detail Page Not Found")
+    return("false")
+}

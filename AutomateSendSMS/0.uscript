@@ -1,165 +1,139 @@
+comment("=====================================================")
+comment("=== MAIN ===")
+comment("=====================================================")
 clear all data
-alert("got here")
+set(#todayMarker,$getTodayMarker(),"Global")
+alert("Today's marker: {#todayMarker}")
+comment("=== Navigate to Lead Inbox ===")
 set(#url,"https://mobile.impact.ailife.com/Lead/Inbox","Global")
 navigate(#url,"Wait")
+wait(2)
+comment("=== Open first lead ===")
 click($element offset(<href=w"*InboxDetail*">,0),"Left Click","No")
-comment("... your record processing loop goes here ...")
-comment("Result example: 'Send Text on Sep 17 2026'")
-alert("got here2")
+wait(2)
+comment("=== Main processing loop ===")
 set(#hasNext,"Yes","Global")
 set(#count,0,"Global")
 set(#maxLeads,100,"Global")
-set(#firstLead,"true","Global")
-comment("=== Main processing loop ===")
 loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLeads))) {
-    alert("got here bub0")
-    WaitForDetailPage()
-    alert("got here bub1")
-    if($comparison(#firstLead,"=","false")) {
-        then {
-            alert("got here bub")
-            click($element offset(<onclick=w"*/Lead/MoveNext*">,0),"Left Click","No")
-        }
-        else {
-            set(#firstLead,"false","Global")
-        }
+    alert("Top of Main loop")
+    comment("=== 1. Wait for Detail page – give user ~60 seconds to navigate manually ===")
+    set(#isReady,"false","Global")
+    set(#waitTries,0,"Global")
+    comment("Get The Page Data")
+    set(#pageData,$ScrapeRecord(),"Global")
+    loop while($both($comparison(#isReady,"=","false"),$comparison(#waitTries,"<",60))) {
+        increment(#waitTries)
+        alert("calling waitforDetailPage")
+        set(#isReady,$WaitForDetailPage(1),"Global")
     }
-    set(#sendTextCompleted,"false","Global")
-    comment("Get the lead information")
-    run javascript("document.querySelector('#LeadTable tbody tr td a').click();")
-    set(#pageData,$scrape attribute(<id="primaryPanel">,"innertext"),"Global")
-    if($contains(#pageData,#todayMarker)) {
+    if($comparison(#isReady,"=","false")) {
         then {
-            comment("Text already sent today — skip this record")
-            set(#skipRecord,"Yes","Global")
+            alert("Detail page not found after 60 seconds. Please navigate manually or restart the script.")
+            set(#hasNext,"No","Global")
         }
         else {
-            comment("=== Extract phone numbers ===")
-            set(#mobileBlock,$page scrape("Mobile:","Home:"),"Global")
-            set(#mobile,$trim($strip tags(#mobileBlock)),"Global")
-            set(#homeBlock,$page scrape("Home:","Email:"),"Global")
-            set(#home,$trim($strip tags($replace(#homeBlock,"Home:",""))),"Global")
-            comment("Determine which phone number to use")
-            if($comparison($trim(#mobile),"=","")) {
+            comment("=== 2. Scrape / process the CURRENT record (first record is processed immediately) ===")
+            run javascript("document.querySelector('#LeadTable tbody tr td a').click();")
+            wait(1)
+            set(#pageData,$scrape attribute(<id="primaryPanel">,"innertext"),"Global")
+            comment("=== 3. Skip if already texted today ===")
+            if($contains(#pageData,#todayMarker)) {
                 then {
-                    set(#primaryPhoneRaw,$trim(#home),"Global")
+                    set(#skipRecord,"Yes","Global")
+                    alert("Record {#count}: already texted today — skipping")
                 }
                 else {
-                    set(#primaryPhoneRaw,$trim(#mobile),"Global")
-                }
-            }
-            comment("=== URL-encode the phone number ===")
-            set(#primaryPhoneEnc,#primaryPhoneRaw,"Global")
-            set(#primaryPhoneEnc,$replace(#primaryPhoneEnc,"(","%28"),"Global")
-            set(#primaryPhoneEnc,$replace(#primaryPhoneEnc,")","%29"),"Global")
-            set(#primaryPhoneEnc,$replace(#primaryPhoneEnc," ","%20"),"Global")
-            comment("=== Get leadid from the current URL ===")
-            wait(2)
-            set(#leadid,$replace($url,"https://mobile.impact.ailife.com/Lead/InboxDetail?LeadId=",""),"Global")
-            comment("=== OPTION A: Click the actual Send Text link ===")
-            click($element offset(<href=w"*CheckInSendText*">,0),"Left Click","No")
-            wait(2)
-            comment("--- Navigate to WhatHappend page and click Send Text ---")
-            set(#url,"https://mobile.impact.ailife.com/Lead/WhatHappend?LeadId={#leadid}&PrimaryPhone={#primaryPhoneEnc}&callId=-2","Global")
-            navigate(#url,"Wait")
-            click($element offset(<onclick="SendText(); return false;">,0),"Left Click","No")
-            wait(2)
-            comment("--- Fallback: Call Back logic if Send Text fails ---")
-            comment("=== CALL BACK LOGIC ===")
-            set(#warnedUser,"false","Global")
-            IsDetailPage()
-            if($comparison(#onDetailPage,"=","false")) {
-                then {
-                    comment("SendTextFailed - try to automatically set callback")
-                    scheduleCallBack()
-                    if($comparison(#onDetailPage,"=","false")) {
+                    comment("=== 4. Extract phone numbers ===")
+                    set(#mobileBlock,$page scrape("Mobile:","Home:"),"Global")
+                    set(#mobile,$trim($strip tags(#mobileBlock)),"Global")
+                    set(#homeBlock,$page scrape("Home:","Email:"),"Global")
+                    set(#home,$trim($strip tags($replace(#homeBlock,"Home:",""))),"Global")
+                    if($comparison($trim(#mobile),"=","")) {
                         then {
-                            alert("Automated Disposition Setting Failed- Manually Chose Disposition to Proceed ")
-                            TimedWaitForDetailPage(30)
+                            set(#primaryPhoneRaw,$trim(#home),"Global")
                         }
                         else {
-                            comment("Do Nothing")
+                            set(#primaryPhoneRaw,$trim(#mobile),"Global")
+                        }
+                    }
+                    comment("=== 5. URL-encode the phone ===")
+                    set(#primaryPhoneEnc,#primaryPhoneRaw,"Global")
+                    set(#primaryPhoneEnc,$replace(#primaryPhoneEnc,"(","%28"),"Global")
+                    set(#primaryPhoneEnc,$replace(#primaryPhoneEnc,")","%29"),"Global")
+                    set(#primaryPhoneEnc,$replace(#primaryPhoneEnc," ","%20"),"Global")
+                    comment("=== 6. Get leadid from URL ===")
+                    set(#leadid,$replace($url,"https://mobile.impact.ailife.com/Lead/InboxDetail?LeadId=",""),"Global")
+                    comment("=== 7. Click Send Text link ===")
+                    if($exists(<href=w"*CheckInSendText*">)) {
+                        then {
+                            click($element offset(<href=w"*CheckInSendText*">,0),"Left Click","No")
+                            wait(2)
+                        }
+                    }
+                    comment("=== 8. Navigate to WhatHappend ===")
+                    set(#url,"https://mobile.impact.ailife.com/Lead/WhatHappend?LeadId={#leadid}&PrimaryPhone={#primaryPhoneEnc}&callId=-2","Global")
+                    navigate(#url,"Wait")
+                    wait for browser event("Everything Loaded","")
+                    wait(2)
+                    if($exists(<onclick="SendText(); return false;">)) {
+                        then {
+                            click($element offset(<onclick="SendText(); return false;">,0),"Left Click","No")
+                            wait(2)
+                        }
+                    }
+                    comment("=== 9. Fallback: Call Back disposition if SendText failed ===")
+                    if($comparison($IsDetailPage(),"=","false")) {
+                        then {
+                            scheduleCallBack()
+                            if($comparison($IsDetailPage(),"=","false")) {
+                                then {
+                                    alert("Automated disposition failed — please choose manually")
+                                    set(#isReady,$WaitForDetailPage(60),"Global")
+                                }
+                            }
                         }
                     }
                 }
-                else {
-                    comment("Already warned user — staying silent")
+            }
+            comment("=== 10. Read the record counter ===")
+            set(#counterText,$trim($strip tags($scrape attribute(<class="col-xs-3 text-center fbold pdrht0p">,"innertext"))),"Global")
+            clear list(%counterParts)
+            add list to list(%counterParts,$list from text(#counterText,"/"),"Delete","Global")
+            set(#counterLeft,$trim($list item(%counterParts,0)),"Global")
+            set(#counterRight,$trim($list item(%counterParts,1)),"Global")
+            comment("=== 11. End of list check ===")
+            if($both($comparison(#counterLeft,"=",#counterRight),$not($comparison(#counterLeft,"=","")))) {
+                then {
+                    alert("Reached end of list at record {#count}")
+                    set(#hasNext,"No","Global")
+                }
+            }
+            increment(#count)
+            comment("=== 12. Advance to NEXT lead (only if more records remain) ===")
+            if($comparison(#hasNext,"=","Yes")) {
+                then {
+                    if($exists(<onclick=w"*/Lead/MoveNext*">)) {
+                        then {
+                            click($element offset(<onclick=w"*/Lead/MoveNext*">,0),"Left Click","No")
+                            wait for browser event("Everything Loaded","")
+                            wait(2)
+                            comment("Wait for the new detail page to render")
+                            set(#moved,$WaitForDetailPage(30),"Global")
+                            if($comparison(#moved,"=","false")) {
+                                then {
+                                    alert("MoveNext landed on non-detail page — aborting loop")
+                                    set(#hasNext,"No","Global")
+                                }
+                            }
+                        }
+                        else {
+                            alert("No MoveNext button — reached end of list")
+                            set(#hasNext,"No","Global")
+                        }
+                    }
                 }
             }
         }
     }
-    comment("=== Read the record counter ===")
-    set(#counterText,$trim($strip tags($scrape attribute(<class="col-xs-3 text-center fbold pdrht0p">,"innertext"))),"Global")
-    clear list(%counterParts)
-    add list to list(%counterParts,$list from text(#counterText,"/"),"Delete","Global")
-    set(#counterLeft,$trim($list item(%counterParts,0)),"Global")
-    set(#counterRight,$trim($list item(%counterParts,1)),"Global")
-    comment("Optional: Add logic here to set #hasNext = \"No\" when you reach the end")
-    increment(#count)
-}
-define IsDetailPage {
-    set(#headerText,$scrape attribute(<class="container-fluid pgname">,"innertext"),"Global")
-    set(#headerTextLowerCase,$change text casing($trim(#headerText),"Lower Case"),"Global")
-    set(#onDetailPage,"false","Global")
-    if($contains(#headerTextLowerCase,"detail")) {
-        then {
-            set(#onDetailPage,"true","Global")
-        }
-        else {
-            set(#onDetailPage,"false","Global")
-        }
-    }
-    return(#detailPageFound)
-}
-comment("=================== WaitforDetail =============================")
-define WaitForDetailPage(#loopCount) {
-    if($comparison(#loopCount,"=","")) {
-        then {
-            set(#loopCount,60,"Global")
-        }
-    }
-    set(#attempts,0,"Global")
-    set(#done,"false","Global")
-    loop(#loopCount) {
-        increment(#attempts)
-        wait(1)
-        set(#done,$IsDetailPage(),"Global")
-        if($comparison(#done,"=","true")) {
-            then {
-                break()
-            }
-        }
-    }
-    if($comparison(#done,"=","false")) {
-        then {
-            alert("Waited {#attempts} seconds - Detail Page Not Found")
-        }
-    }
-    return(#done)
-}
-define $getTodayMarker {
-    comment("=== Scrape today's date ===")
-    set(#rawDate,$date,"Local")
-    comment("=== Split on '/' to get month, day, year-time ===")
-    clear list(%dateParts)
-    add list to list(%dateParts,$list from text(#rawDate,"/"),"Delete","Local")
-    set(#monthNum,$trim($list item(%dateParts,0)),"Local")
-    set(#dayNum,$trim($list item(%dateParts,1)),"Local")
-    set(#yearNum,$trim($list item(%dateParts,2)),"Local")
-    comment("=== Split the year part on space to strip the time ===")
-    clear list(%yearParts)
-    add list to list(%yearParts,$list from text(#yearNum," "),"Delete","Local")
-    set(#yearNum,$trim($list item(%yearParts,0)),"Local")
-    set(#yearNum,$substring(#yearNum,0,4),"Local")
-    comment("=== Build the month abbreviation list ===")
-    clear list(%months)
-    add list to list(%months,$list from text("Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",","),"Delete","Local")
-    comment("=== Look up the month abbreviation (0-indexed) ===")
-    set(#monthIdx,$subtract(#monthNum,1),"Local")
-    set(#monthAbbr,$list item(%months,#monthIdx),"Local")
-    comment("=== Build today's date string in the page's format ===")
-    set(#todayStr,"{#monthAbbr} {#dayNum} {#yearNum}","Local")
-    comment("=== Build the full marker as it appears in pageData ===")
-    set(#todayMarker,"Send Text on {#todayStr}","Global")
-    return(#todayMarker)
 }
