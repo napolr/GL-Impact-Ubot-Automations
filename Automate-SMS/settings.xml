@@ -36,7 +36,6 @@
   <CompiledBotIncludedInterfaces>
     <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
     <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
-    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
   </CompiledBotIncludedInterfaces>
   <CompiledBotSchedulableCommands />
   <Scripts>
@@ -48,9 +47,9 @@
       <UIEditorJson></UIEditorJson>
       <UIEditorHtml></UIEditorHtml>
     </Script>
-    <Script name="Untitled Script 2" type="Normal" isHidden="false">
-      <UIEditorJson></UIEditorJson>
-      <UIEditorHtml></UIEditorHtml>
+    <Script name="getTodayMarker" type="Normal" isHidden="false">
+      <UIEditorJson />
+      <UIEditorHtml />
     </Script>
   </Scripts>
 </Settings>

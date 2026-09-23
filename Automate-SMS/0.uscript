@@ -1,23 +1,24 @@
+alert("Get started")
 clear all data
-alert("got here")
+getTodayMarker()
 set(#url,"https://mobile.impact.ailife.com/Lead/Inbox","Global")
 navigate(#url,"Wait")
+alert("Navigate to the first lead detail card and then press the 'GO' Button...")
 click($element offset(<href=w"*InboxDetail*">,0),"Left Click","No")
+comment("=== 1. Initialize the control variable ===")
+comment("=== 4. Execution resumes here after the button is clicked ===")
+alert("GO was pressed! Continuing with the script...")
 comment("... your record processing loop goes here ...")
 comment("Result example: 'Send Text on Sep 17 2026'")
-alert("got here2")
 set(#hasNext,"Yes","Global")
 set(#count,0,"Global")
 set(#maxLeads,100,"Global")
 set(#firstLead,"true","Global")
 comment("=== Main processing loop ===")
 loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLeads))) {
-    alert("got here bub0")
     WaitForDetailPage()
-    alert("got here bub1")
     if($comparison(#firstLead,"=","false")) {
         then {
-            alert("got here bub")
             click($element offset(<onclick=w"*/Lead/MoveNext*">,0),"Left Click","No")
         }
         else {
@@ -97,10 +98,25 @@ loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLead
     comment("Optional: Add logic here to set #hasNext = \"No\" when you reach the end")
     increment(#count)
 }
-define IsDetailPage {
-    set(#headerText,$scrape attribute(<class="container-fluid pgname">,"innertext"),"Global")
-    set(#headerTextLowerCase,$change text casing($trim(#headerText),"Lower Case"),"Global")
+define WaitForDetailPage {
+    set(#attempts,0,"Local")
     set(#onDetailPage,"false","Global")
+    loop while($comparison(#onDetailPage,"=","false")) {
+        if($comparison(#attempts,">",60)) {
+            then {
+                alert("Timed out after 60 attempts waiting for Detail page")
+                stop script
+            }
+        }
+        increment(#attempts)
+        wait(1)
+        IsDetailPage()
+    }
+}
+define IsDetailPage {
+    set(#headerText,$scrape attribute(<class="container-fluid pgname">,"innertext"),"Local")
+    set(#headerTextLowerCase,$change text casing($trim(#headerText),"Lower Case"),"Local")
+    comment("Check both the header text and the URL")
     if($contains(#headerTextLowerCase,"detail")) {
         then {
             set(#onDetailPage,"true","Global")
@@ -109,57 +125,5 @@ define IsDetailPage {
             set(#onDetailPage,"false","Global")
         }
     }
-    return(#detailPageFound)
-}
-comment("=================== WaitforDetail =============================")
-define WaitForDetailPage(#loopCount) {
-    if($comparison(#loopCount,"=","")) {
-        then {
-            set(#loopCount,60,"Global")
-        }
-    }
-    set(#attempts,0,"Global")
-    set(#done,"false","Global")
-    loop(#loopCount) {
-        increment(#attempts)
-        wait(1)
-        set(#done,$IsDetailPage(),"Global")
-        if($comparison(#done,"=","true")) {
-            then {
-                break()
-            }
-        }
-    }
-    if($comparison(#done,"=","false")) {
-        then {
-            alert("Waited {#attempts} seconds - Detail Page Not Found")
-        }
-    }
-    return(#done)
-}
-define $getTodayMarker {
-    comment("=== Scrape today's date ===")
-    set(#rawDate,$date,"Local")
-    comment("=== Split on '/' to get month, day, year-time ===")
-    clear list(%dateParts)
-    add list to list(%dateParts,$list from text(#rawDate,"/"),"Delete","Local")
-    set(#monthNum,$trim($list item(%dateParts,0)),"Local")
-    set(#dayNum,$trim($list item(%dateParts,1)),"Local")
-    set(#yearNum,$trim($list item(%dateParts,2)),"Local")
-    comment("=== Split the year part on space to strip the time ===")
-    clear list(%yearParts)
-    add list to list(%yearParts,$list from text(#yearNum," "),"Delete","Local")
-    set(#yearNum,$trim($list item(%yearParts,0)),"Local")
-    set(#yearNum,$substring(#yearNum,0,4),"Local")
-    comment("=== Build the month abbreviation list ===")
-    clear list(%months)
-    add list to list(%months,$list from text("Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",","),"Delete","Local")
-    comment("=== Look up the month abbreviation (0-indexed) ===")
-    set(#monthIdx,$subtract(#monthNum,1),"Local")
-    set(#monthAbbr,$list item(%months,#monthIdx),"Local")
-    comment("=== Build today's date string in the page's format ===")
-    set(#todayStr,"{#monthAbbr} {#dayNum} {#yearNum}","Local")
-    comment("=== Build the full marker as it appears in pageData ===")
-    set(#todayMarker,"Send Text on {#todayStr}","Global")
-    return(#todayMarker)
+    return(#onDetailPage)
 }
