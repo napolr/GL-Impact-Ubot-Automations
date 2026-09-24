@@ -3,108 +3,134 @@ comment("=== MAIN ===")
 comment("=====================================================")
 clear all data
 set(#todayMarker,$getTodayMarker(),"Global")
+alert("Today's marker: {#todayMarker}")
 comment("=== Navigate to Lead Inbox ===")
 set(#url,"https://mobile.impact.ailife.com/Lead/Inbox","Global")
 navigate(#url,"Wait")
+wait for browser event("Everything Loaded","")
+wait(2)
 comment("=== Get total number of leads ===")
 set(#maxLeads,$GetMaxLeads(),"Global")
+alert("Total leads to process: {#maxLeads}")
 comment("=== Open first lead ===")
 click($element offset(<href=w"*InboxDetail*">,0),"Left Click","No")
+wait for browser event("Everything Loaded","")
+wait(2)
 comment("=== Main processing loop ===")
 set(#count,0,"Global")
-loop while($comparison(#count,"<",#maxLeads)) {
+set(#hasNext,"Yes","Global")
+loop while($both($comparison(#count,"<",#maxLeads),$comparison(#hasNext,"=","Yes"))) {
     increment(#count)
-    comment("=== 1. Wait for Detail page – give user ~60 seconds to navigate manually ===")
-    set(#isReady,"false","Global")
-    set(#waitTries,0,"Global")
+    log("Processing record {#count} of {#maxLeads}")
+    comment("=== 1. Wait for Detail page ===")
     set(#isReady,$WaitForDetailPage(60),"Global")
     if($comparison(#isReady,"=","false")) {
         then {
-            comment("Detail page not found after 60 seconds. Stopping.")
-            set(#count,#maxLeads,"Global")
+            alert("Detail page not found after 60 seconds. Stopping.")
+            set(#hasNext,"No","Global")
         }
         else {
-            comment("=== 2. Scrape / process the CURRENT record ===")
-            run javascript("document.querySelector('#LeadTable tbody tr td a').click();")
-            wait(1)
-            set(#pageData,$scrape attribute(<id="primaryPanel">,"innertext"),"Global")
-            comment("=== 3. Skip if already texted today ===")
-            if($contains(#pageData,#todayMarker)) {
+            comment("=== 2. Scrape this record ===")
+            set(#pageData,$ScrapeRecord(),"Global")
+            comment("=== 3. Skip check ===")
+            set(#skipRecord,"No","Global")
+            set(#todayStr,"{#monthAbbr} {#dayNum} {#yearNum}","Global")
+            if($contains(#pageData,"No Answer on {#todayStr}")) {
                 then {
-                    comment("Record {#count}: already texted today — skipping")
+                    set(#skipRecord,"Yes","Global")
                 }
-                else {
-                    comment("=== 4. Extract phone numbers ===")
-                    set(#mobileBlock,$page scrape("Mobile:","Home:"),"Global")
-                    set(#mobile,$trim($strip tags(#mobileBlock)),"Global")
-                    set(#homeBlock,$page scrape("Home:","Email:"),"Global")
-                    set(#home,$trim($strip tags($replace(#homeBlock,"Home:",""))),"Global")
-                    if($comparison($trim(#mobile),"=","")) {
+            }
+            if($contains(#pageData,"Left Message on {#todayStr}")) {
+                then {
+                    set(#skipRecord,"Yes","Global")
+                }
+            }
+            if($contains(#pageData,"Schedule Call Back appointment on")) {
+                then {
+                    set(#skipRecord,"Yes","Global")
+                }
+            }
+            if($contains(#pageData,"Schedule Virtual Appointment")) {
+                then {
+                    set(#skipRecord,"Yes","Global")
+                }
+            }
+            if($comparison(#skipRecord,"=","No")) {
+                then {
+                    comment("=== 4. Extract table fields (optional) ===")
+                    set(#groupField,$GetTableValue("Group"),"Global")
+                    set(#typeField,$GetTableValue("Type"),"Global")
+                    set(#assignDate,$GetTableValue("AssignDate"),"Global")
+                    set(#statusField,$GetTableValue("Status"),"Global")
+                    log("Record {#count}: group={#groupField} type={#typeField} status={#statusField}")
+                    comment("=== 5. Dial: mobile preferred, else home ===")
+                    if($exists(<id="cellPhCallButton">)) {
                         then {
-                            set(#primaryPhoneRaw,$trim(#home),"Global")
+                            log("Clicking Call Mobile...")
+                            click(<id="cellPhCallButton">,"Left Click","No")
+                            wait(3)
                         }
                         else {
-                            set(#primaryPhoneRaw,$trim(#mobile),"Global")
-                        }
-                    }
-                    comment("=== 5. URL-encode the phone ===")
-                    set(#primaryPhoneEnc,#primaryPhoneRaw,"Global")
-                    set(#primaryPhoneEnc,$replace(#primaryPhoneEnc,"(","%28"),"Global")
-                    set(#primaryPhoneEnc,$replace(#primaryPhoneEnc,")","%29"),"Global")
-                    set(#primaryPhoneEnc,$replace(#primaryPhoneEnc," ","%20"),"Global")
-                    comment("=== 6. Get leadid from URL ===")
-                    set(#leadid,$replace($url,"https://mobile.impact.ailife.com/Lead/InboxDetail?LeadId=",""),"Global")
-                    comment("=== 7. Click Send Text link ===")
-                    if($exists(<href=w"*CheckInSendText*">)) {
-                        then {
-                            click($element offset(<href=w"*CheckInSendText*">,0),"Left Click","No")
-                            wait(2)
-                        }
-                    }
-                    comment("=== 8. Navigate to WhatHappend ===")
-                    set(#url,"https://mobile.impact.ailife.com/Lead/WhatHappend?LeadId={#leadid}&PrimaryPhone={#primaryPhoneEnc}&callId=-2","Global")
-                    navigate(#url,"Wait")
-                    if($exists(<onclick="SendText(); return false;">)) {
-                        then {
-                            click($element offset(<onclick="SendText(); return false;">,0),"Left Click","No")
-                            wait(2)
-                        }
-                    }
-                    comment("=== 9. Fallback: Call Back disposition if SendText failed ===")
-                    if($comparison($IsDetailPage(),"=","false")) {
-                        then {
-                            scheduleCallBack()
-                            if($comparison($IsDetailPage(),"=","false")) {
+                            if($exists(<id="phoneCallButton">)) {
                                 then {
-                                    alert("Automated disposition failed — please choose manually")
-                                    set(#isReady,$WaitForDetailPage(60),"Global")
+                                    log("No mobile number - clicking Call Home...")
+                                    click(<id="phoneCallButton">,"Left Click","No")
+                                    wait(3)
+                                }
+                                else {
+                                    alert("No Call Mobile or Call Home link found - skipping dial")
                                 }
                             }
+                        }
+                    }
+                    comment("=== 6. Wait for the user to disposition (up to 10 min) ===")
+                    comment("The app returns to the Detail page automatically after disposition.")
+                    set(#returned,$WaitForDetailPage(600),"Global")
+                    if($comparison(#returned,"=","false")) {
+                        then {
+                            alert("Timed out after 10 minutes waiting for disposition - stopping")
+                            set(#hasNext,"No","Global")
+                        }
+                    }
+                }
+                else {
+                    log("Record {#count}: skipped (recent activity or future appointment)")
+                }
+            }
+            comment("=== 7. Move to next record ===")
+            if($both($comparison(#count,"<",#maxLeads),$comparison(#hasNext,"=","Yes"))) {
+                then {
+                    if($exists(<onclick=w"*/Lead/MoveNext*">)) {
+                        then {
+                            log("Clicking MoveNext...")
+                            click($element offset(<onclick=w"*/Lead/MoveNext*">,0),"Left Click","No")
+                            wait for browser event("Everything Loaded","")
+                            wait(2)
+                            set(#moved,$WaitForDetailPage(30),"Global")
+                            if($comparison(#moved,"=","false")) {
+                                then {
+                                    alert("MoveNext failed to load a detail page - stopping")
+                                    set(#hasNext,"No","Global")
+                                }
+                            }
+                        }
+                        else {
+                            alert("No MoveNext button found - stopping")
+                            set(#hasNext,"No","Global")
                         }
                     }
                 }
             }
-            comment("Processed record {#count} of {#maxLeads}")
-            comment("=== 10. Click NEXT record (MoveNext) — only if more remain ===")
-            if($comparison(#count,"<",#maxLeads)) {
+            comment("=== 8. End-of-list check via counter ===")
+            set(#counterText,$trim($strip tags($scrape attribute(<class="col-xs-3 text-center fbold pdrht0p">,"innertext"))),"Global")
+            clear list(%counterParts)
+            add list to list(%counterParts,$list from text(#counterText,"/"),"Delete","Global")
+            set(#counterLeft,$trim($list item(%counterParts,0)),"Global")
+            set(#counterRight,$trim($list item(%counterParts,1)),"Global")
+            if($both($comparison(#counterLeft,"=",#counterRight),$not($comparison(#counterLeft,"=","")))) {
                 then {
-                    if($exists(<onclick=w"*/Lead/MoveNext*">)) {
-                        then {
-                            comment("Clicking MoveNext...")
-                            click($element offset(<onclick=w"*/Lead/MoveNext*">,0),"Left Click","No")
-                            set(#moved,$WaitForDetailPage(30),"Global")
-                            if($comparison(#moved,"=","false")) {
-                                then {
-                                    alert("MoveNext failed to load a detail page — stopping")
-                                    set(#count,#maxLeads,"Global")
-                                }
-                            }
-                        }
-                        else {
-                            alert("No MoveNext button found — stopping")
-                            set(#count,#maxLeads,"Global")
-                        }
-                    }
+                    alert("Reached end of list at record {#count}")
+                    set(#hasNext,"No","Global")
                 }
             }
         }

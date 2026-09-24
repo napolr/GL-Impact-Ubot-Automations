@@ -1,7 +1,11 @@
 define $IsDetailPage {
+    comment("Scrape page contents to determine if we are on a Detail page")
+    set(#pageContent,$scrape attribute(<id="primaryPanel">,"innertext"),"Local")
+    set(#pageContent,$change text casing($trim(#pageContent),"Lower Case"),"Local")
+    comment("Also check the page header as a secondary signal")
     set(#headerText,$scrape attribute(<class="container-fluid pgname">,"innertext"),"Local")
     set(#headerTextLowerCase,$change text casing($trim(#headerText),"Lower Case"),"Local")
-    if($contains(#headerTextLowerCase,"detail")) {
+    if($or($contains(#pageContent,"mobile:"), $contains(#pageContent,"home:"), $contains(#headerTextLowerCase,"detail"))) {
         then {
             set(#onDetailPage,"true","Global")
             return("true")

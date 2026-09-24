@@ -36,6 +36,9 @@
   <CompiledBotIncludedInterfaces>
     <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
     <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
   </CompiledBotIncludedInterfaces>
   <CompiledBotSchedulableCommands />
   <Scripts>
@@ -55,17 +58,21 @@
       <UIEditorJson></UIEditorJson>
       <UIEditorHtml></UIEditorHtml>
     </Script>
-    <Script name="Untitled Script" type="Normal" isHidden="false">
+    <Script name="scheduleCallBack" type="Normal" isHidden="false">
       <UIEditorJson></UIEditorJson>
       <UIEditorHtml></UIEditorHtml>
     </Script>
     <Script name="ScrapeRecord" type="Normal" isHidden="false">
-      <UIEditorJson />
-      <UIEditorHtml />
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
     </Script>
     <Script name="GetMaxLeads" type="Normal" isHidden="false">
-      <UIEditorJson />
-      <UIEditorHtml />
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+    <Script name="GetTableValue" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
     </Script>
   </Scripts>
 </Settings>
