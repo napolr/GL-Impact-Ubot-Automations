@@ -9,4 +9,5 @@ define scheduleCallBack {
     navigate(#url,"Wait")
     wait for browser event("Everything Loaded","")
     wait(2)
+    IsDetailPage()
 }

@@ -39,38 +39,11 @@
     <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
     <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
     <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
   </CompiledBotIncludedInterfaces>
   <CompiledBotSchedulableCommands />
   <Scripts>
     <Script name="main" type="Normal" isHidden="false">
-      <UIEditorJson></UIEditorJson>
-      <UIEditorHtml></UIEditorHtml>
-    </Script>
-    <Script name="IsDetailPage" type="Normal" isHidden="false">
-      <UIEditorJson></UIEditorJson>
-      <UIEditorHtml></UIEditorHtml>
-    </Script>
-    <Script name="WaitForDetailPage" type="Normal" isHidden="false">
-      <UIEditorJson></UIEditorJson>
-      <UIEditorHtml></UIEditorHtml>
-    </Script>
-    <Script name="getTodayMarker" type="Normal" isHidden="false">
-      <UIEditorJson></UIEditorJson>
-      <UIEditorHtml></UIEditorHtml>
-    </Script>
-    <Script name="scheduleCallBack" type="Normal" isHidden="false">
-      <UIEditorJson></UIEditorJson>
-      <UIEditorHtml></UIEditorHtml>
-    </Script>
-    <Script name="ScrapeRecord" type="Normal" isHidden="false">
-      <UIEditorJson></UIEditorJson>
-      <UIEditorHtml></UIEditorHtml>
-    </Script>
-    <Script name="GetMaxLeads" type="Normal" isHidden="false">
-      <UIEditorJson></UIEditorJson>
-      <UIEditorHtml></UIEditorHtml>
-    </Script>
-    <Script name="GetTableValue" type="Normal" isHidden="false">
       <UIEditorJson></UIEditorJson>
       <UIEditorHtml></UIEditorHtml>
     </Script>

@@ -35,19 +35,10 @@
   <CompiledBotSetupOutputFile></CompiledBotSetupOutputFile>
   <CompiledBotIncludedInterfaces>
     <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
-    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
   </CompiledBotIncludedInterfaces>
   <CompiledBotSchedulableCommands />
   <Scripts>
-    <Script name="main" type="Normal" isHidden="false">
-      <UIEditorJson></UIEditorJson>
-      <UIEditorHtml></UIEditorHtml>
-    </Script>
-    <Script name="scheduleCallBack" type="Normal" isHidden="false">
-      <UIEditorJson></UIEditorJson>
-      <UIEditorHtml></UIEditorHtml>
-    </Script>
-    <Script name="getTodayMarker" type="Normal" isHidden="false">
+    <Script name="Untitled Script" type="Normal" isHidden="false">
       <UIEditorJson />
       <UIEditorHtml />
     </Script>

@@ -1,0 +1,14 @@
+define $IsDetailPage {
+    set(#headerText,$scrape attribute(<class="container-fluid pgname">,"innertext"),"Local")
+    set(#headerTextLowerCase,$change text casing($trim(#headerText),"Lower Case"),"Local")
+    if($contains(#headerTextLowerCase,"detail")) {
+        then {
+            set(#onDetailPage,"true","Global")
+            return("true")
+        }
+        else {
+            set(#onDetailPage,"false","Global")
+            return("false")
+        }
+    }
+}

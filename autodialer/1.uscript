@@ -1,18 +1,57 @@
-define $IsDetailPage {
-    comment("Scrape page contents to determine if we are on a Detail page")
-    set(#pageContent,$scrape attribute(<id="primaryPanel">,"innertext"),"Local")
-    set(#pageContent,$change text casing($trim(#pageContent),"Lower Case"),"Local")
-    comment("Also check the page header as a secondary signal")
-    set(#headerText,$scrape attribute(<class="container-fluid pgname">,"innertext"),"Local")
-    set(#headerTextLowerCase,$change text casing($trim(#headerText),"Lower Case"),"Local")
-    if($or($contains(#pageContent,"mobile:"), $contains(#pageContent,"home:"), $contains(#headerTextLowerCase,"detail"))) {
-        then {
-            set(#onDetailPage,"true","Global")
-            return("true")
-        }
-        else {
-            set(#onDetailPage,"false","Global")
-            return("false")
-        }
-    }
-}
+	define $IsDetailPage {
+		comment("Safe Detail page detection with testing alerts")
+
+		set(#headerText,"","Local")
+		set(#pageContent,"","Local")
+		set(#onDetailPage,"false","Local")
+
+		comment("1. Try to scrape the header safely")
+		if($exists(<class="*pgname*">)) {
+			then {
+				set(#headerText,$scrape attribute(<class="*pgname*">,"innertext"),"Local")
+				set(#headerText,$change text casing($trim(#headerText),"Lower Case"),"Local")
+				alert("Header found: {#headerText}")
+
+				if($contains(#headerText,"detail")) {
+					then {
+						alert("→ Detail page detected via HEADER")
+						set(#onDetailPage,"true","Local")
+						return("true")
+					}
+				}
+			}
+			else {
+				alert("Header element (pgname) NOT found")
+			}
+		}
+
+		comment("2. Fallback: check primaryPanel")
+		if($exists(<id="primaryPanel">)) {
+			then {
+				set(#pageContent,$scrape attribute(<id="primaryPanel">,"innertext"),"Local")
+				set(#pageContent,$change text casing($trim(#pageContent),"Lower Case"),"Local")
+
+				set(#preview,$find regular expression(#pageContent,"^.{0,120}"),"Local")
+				alert("PrimaryPanel preview: {#preview}")
+
+				if($contains(#pageContent,"mobile:")) {
+					then {
+						alert("→ Detail page detected via PRIMARY PANEL")
+						set(#onDetailPage,"true","Local")
+						return("true")
+					}
+					else {
+						alert("PrimaryPanel exists but does NOT contain 'mobile:'")
+					}
+				}
+			}
+			else {
+				alert("primaryPanel element NOT found")
+			}
+		}
+
+		comment("3. Not a detail page")
+		alert("→ NOT a Detail page")
+		set(#onDetailPage,"false","Local")
+		return("false")
+	}
