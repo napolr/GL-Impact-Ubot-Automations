@@ -1,0 +1,8 @@
+comment("--- Update #counterLeft / #counterRight from page ---")
+define UpdateCounterFromPage {
+    set(#counterText,$trim($strip tags($scrape attribute(<class="col-xs-3 text-center fbold pdrht0p">,"innertext"))),"Global")
+    clear list(%counterParts)
+    add list to list(%counterParts,$list from text(#counterText,"/"),"Delete","Global")
+    set(#counterLeft,$trim($list item(%counterParts,0)),"Global")
+    set(#counterRight,$trim($list item(%counterParts,1)),"Global")
+}

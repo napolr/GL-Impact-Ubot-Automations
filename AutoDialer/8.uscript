@@ -1,0 +1,48 @@
+comment("=====================================================")
+comment("=== MAIN LOOP MODULE ===")
+comment("=====================================================")
+comment("--- Process all records in the direction set by #startAtBottom ---")
+define ProcessRecords {
+    set(#count,0,"Global")
+    set(#hasNext,"Yes","Global")
+    loop while($both($comparison(#count,"<",#maxLeads),$comparison(#hasNext,"=","Yes"))) {
+        increment(#count)
+        log("Processing record {#count} of {#maxLeads}")
+        comment("=== Guard: confirm the detail page is actually loaded ===")
+        set(#isReady,#false,"Global")
+        set(#isReady,$WaitForDetailPage(60),"Global")
+        log("Is Ready={#isReady}")
+        if($comparison(#isReady,"=",#false)) {
+            then {
+                log("Detail page not found. Stopping.")
+                set(#hasNext,"No","Global")
+            }
+            else {
+                log("=== 1. Scrape the record ===")
+                ScrapeLeadDetail()
+                log("=== 2. Decide if it should be skipped ===")
+                EvaluateSkipRecord()
+                log("=== 3. If not skipped: call + wait for disposition ===")
+                if($comparison(#skipRecord,"=","No")) {
+                    then {
+                        InitiateCall()
+                        log("Got Here _ After Initiate Call - calling wait for detail page")
+                        set(#isReady,$WaitForDetailPage(1200),"Global")
+                        log("Got Here _ After Wiat foredetail page")
+                    }
+                    else {
+                        log("Record {#count}: skipped (recent activity or future appointment)")
+                    }
+                }
+                log("=== 4. Advance to next record (direction-aware) ===")
+                if($both($comparison(#count,"<",#maxLeads),$comparison(#hasNext,"=","Yes"))) {
+                    then {
+                        AdvanceToNextRecord()
+                    }
+                }
+                log("=== 5. Check for end of list ===")
+                CheckEndOfList()
+            }
+        }
+    }
+}

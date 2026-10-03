@@ -1,0 +1,47 @@
+comment("=====================================================")
+comment("=== RECORD MODULES ===")
+comment("=====================================================")
+comment("--- Scrape record data from the page ---")
+define ScrapeCurrentRecord {
+    set(#pageData,$ScrapeRecord(),"Global")
+    log("Calling ScrapeLeadDetail")
+    ScrapeLeadDetail()
+    log("Done Calling ScrapeLeadDetail")
+    set(#groupField,$GetTableValue("Group"),"Global")
+    set(#typeField,$GetTableValue("Type"),"Global")
+    set(#statusField,$GetTableValue("Status"),"Global")
+    log("Record {#count}: group={#groupField} type={#typeField} status={#statusField}")
+}
+define ScrapeLeadDetail {
+    log("=== Grab whole panel text in one shot ===")
+    set(#pageData, $scrape attribute(<id="primaryPanel">, "innertext"), "Global")
+    
+    log("=== Parse name from the <a> that wraps the name span ===")
+    set(#leadName, $scrape attribute(<class="mrgrht5p fs14p f500">, "innertext"), "Global")
+    
+    log("=== Parse label:value pairs from pageData using regex ===")
+    set(#leadLanguage, $find regular expression(#pageData, "(?<=Language:)\\s*\\S+"), "Global")
+    set(#leadMobile, $find regular expression(#pageData, "(?<=Mobile:)\\s*\\([0-9]{3}\\)\\s*[0-9]{3}-[0-9]{4}"), "Global")
+    set(#leadHome, $find regular expression(#pageData, "(?<=Home:)\\s*\\([0-9]{3}\\)\\s*[0-9]{3}-[0-9]{4}"), "Global")
+    set(#leadEmail, $find regular expression(#pageData, "(?<=Email:)\\s*[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"), "Global")
+    set(#leadAddress, $find regular expression(#pageData, "[0-9]+\\s+[A-Z ]+(?:CT|ST|AVE|RD|DR|LN|BLVD|WAY|PL|TER)[A-Z ]*"), "Global")
+    set(#leadCityStateZip, $find regular expression(#pageData, "[A-Za-z ]+,\\s*[A-Za-z ]+,\\s*\\d{5}(?:-\\d{4})?"), "Global")
+    
+    log("=== Table fields (still scrape individually — labels repeat) ===")
+    set(#leadType, $scrape attribute(<class="table table-bordered">, "innertext"), "Global")
+    
+    log("=== Attributes that innertext CANNOT give you ===")
+    set(#leadLat, $scrape attribute(<id="hdnlat">, "value"), "Global")
+    set(#leadLong, $scrape attribute(<id="hdnlong">, "value"), "Global")
+    set(#mobileTel, $scrape attribute(<id="cellPhCallButton">, "href"), "Global")
+    set(#homeTel, $scrape attribute(<id="phoneCallButton">, "href"), "Global")
+    set(#leadImage, $scrape attribute(<id="leadImage">, "src"), "Global")
+    set(#antiForgeryToken, $scrape attribute(<name="__RequestVerificationToken">, "value"), "Global")
+    
+    log("=== Existence checks (still need the DOM) ===")
+    set(#hasMobile, $exists(<id="cellPhCallButton">), "Global")
+    set(#hasHome, $exists(<id="phoneCallButton">), "Global")
+    
+    log("=== Lead ID from URL — pageData doesn't have it ===")
+    set(#leadId, $find regular expression($url, "leadid=(\\d+)"), "Global")
+}

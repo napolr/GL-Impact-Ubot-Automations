@@ -1,0 +1,22 @@
+define EvaluateSkipRecord {
+    set(#skipRecord,"No","Global")
+    set(#todayStr,$getTodayMarker(),"Global")
+    if($contains(#pageData,"No Answer on {#todayStr}")) {
+        then {
+            set(#skipRecord,"Yes","Global")
+            log("Skip reason: Already 'No Answer' today")
+        }
+        else if($contains(#pageData,"Left Message on {#todayStr}")) {
+            set(#skipRecord,"Yes","Global")
+            log("Skip reason: Already 'Left Message' today")
+        }
+        else if($contains(#pageData,"Schedule Call Back appointment on")) {
+            set(#skipRecord,"No","Global")
+            log("Override: Schedule Call Back found - will process")
+        }
+        else if($contains(#pageData,"Schedule Virtual Appointment")) {
+            set(#skipRecord,"Yes","Global")
+            log("Skip reason: Virtual Appointment scheduled")
+        }
+    }
+}

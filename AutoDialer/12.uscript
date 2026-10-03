@@ -1,0 +1,7 @@
+define $ScrapeRecord {
+    run javascript("document.querySelector('#LeadTable tbody tr td a').click();")
+    wait for element(<id="primaryPanel">,30,"")
+    set(#data,$scrape attribute(<id="primaryPanel">,"innertext"),"Global")
+    log("Pagedata scraped")
+    return(#data)
+}

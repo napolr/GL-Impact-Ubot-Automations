@@ -1,0 +1,24 @@
+comment("--- Check whether we've reached the end (direction-aware) ---")
+define CheckEndOfList {
+    UpdateCounterFromPage()
+    if($comparison(#startAtBottom,"=","true")) {
+        then {
+            comment("Bottom-to-top: end when counterLeft = 1")
+            if($comparison(#counterLeft,"=",1)) {
+                then {
+                    log("Reached top of list at record {#count}")
+                    set(#hasNext,"No","Global")
+                }
+            }
+        }
+        else {
+            comment("Top-to-bottom: end when counterLeft = counterRight")
+            if($both($comparison(#counterLeft,"=",#counterRight),$not($comparison(#counterLeft,"=","")))) {
+                then {
+                    log("Reached end of list at record {#count}")
+                    set(#hasNext,"No","Global")
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,35 @@
+define $GetMaxLeads {
+    comment("=== Scrape maxLeads from the detail page counter (X / Y format) ===")
+    set(#result,0,"Local")
+    if($exists(<class="col-xs-3 text-center fbold pdrht0p">)) {
+        then {
+            set(#counterText,$scrape attribute(<class="col-xs-3 text-center fbold pdrht0p">,"innertext"),"Local")
+            set(#counterText,$trim(#counterText),"Local")
+            log("GetMaxLeads: raw counter text = '{#counterText}'")
+            comment("=== Split on '/' ===")
+            clear list(%parts)
+            add list to list(%parts,$list from text(#counterText,"/"),"Delete","Local")
+            comment("=== Take the second item (the total) ===")
+            if($comparison($list total(%parts),">",1)) {
+                then {
+                    set(#result,$trim($list item(%parts,1)),"Local")
+                    log("GetMaxLeads: extracted maxLeads = '{#result}'")
+                }
+                else {
+                    log("GetMaxLeads: split failed - no '/' found in counter text")
+                }
+            }
+        }
+        else {
+            log("GetMaxLeads: counter element not found on page")
+        }
+    }
+    comment("=== Fallback ===")
+    if($comparison(#result,"=",0)) {
+        then {
+            alert("GetMaxLeads could not read counter - defaulting to 100")
+            set(#result,100,"Local")
+        }
+    }
+    return(#result)
+}
