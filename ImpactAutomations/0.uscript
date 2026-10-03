@@ -1,0 +1,31 @@
+comment("=====================================================")
+comment("=== MAIN ===")
+comment("=====================================================")
+ui log view("")
+clear all data
+set(#true,"true","Global")
+set(#debug,"true","Global")
+set(#false,"false","Global")
+set(#todayMarker,$getTodayMarker(),"Local")
+log("Today's marker: {#todayMarker}")
+comment("=== Ask user for processing direction ===")
+ui check box("Debug Mode)",#debu)
+ui check box("Start at Bottom (process from bottom to top)",#startAtBottom)
+comment("=== Navigate to Lead Inbox ===")
+set(#url,"https://mobile.impact.ailife.com/Lead/Inbox","Global")
+navigate(#url,"Wait")
+wait for element(<onclick="location.href='/Lead/BackToInbox'">,4,"Appear")
+comment("=== Open first lead ===")
+click($element offset(<href=w"*InboxDetail*">,0),"Left Click","No")
+wait for element(<onclick="location.href='/Lead/BackToInbox'">,60,"Appear")
+comment("=== If starting at bottom, scroll to the last record first ===")
+set(#maxLeads,$GetMaxLeads(),"Global")
+log("Total leads to process: {#maxLeads}")
+if($comparison(#startAtBottom,"=","true")) {
+    then {
+        ScrollToLastRecord()
+    }
+}
+comment("=== Process all records ===")
+ProcessRecords()
+log("Script finished. Processed {#count} of {#maxLeads} leads.")

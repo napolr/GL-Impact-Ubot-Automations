@@ -19,7 +19,7 @@ define ProcessRecords {
             }
             else {
                 log("=== 1. Scrape the record ===")
-                ScrapeLeadDetail()
+                ScrapeCurrentRecord()
                 log("=== 2. Decide if it should be skipped ===")
                 EvaluateSkipRecord()
                 log("=== 3. If not skipped: call + wait for disposition ===")
