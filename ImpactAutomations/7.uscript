@@ -1,24 +1,19 @@
-comment("--- Check whether we've reached the end (direction-aware) ---")
-define CheckEndOfList {
-    UpdateCounterFromPage()
-    if($comparison(#startAtBottom,"=","true")) {
-        then {
-            comment("Bottom-to-top: end when counterLeft = 1")
-            if($comparison(#counterLeft,"=",1)) {
-                then {
-                    log("Reached top of list at record {#count}")
-                    set(#hasNext,"No","Global")
-                }
-            }
-        }
-        else {
-            comment("Top-to-bottom: end when counterLeft = counterRight")
-            if($both($comparison(#counterLeft,"=",#counterRight),$not($comparison(#counterLeft,"=","")))) {
-                then {
-                    log("Reached end of list at record {#count}")
-                    set(#hasNext,"No","Global")
-                }
-            }
-        }
-    }
+define $getTodayMarker {
+    set(#rawDate,$date,"Local")
+    clear list(%dateParts)
+    add list to list(%dateParts,$list from text(#rawDate,"/"),"Delete","Local")
+    set(#monthNum,$trim($list item(%dateParts,0)),"Local")
+    set(#dayNum,$trim($list item(%dateParts,1)),"Local")
+    set(#yearNum,$trim($list item(%dateParts,2)),"Local")
+    clear list(%yearParts)
+    add list to list(%yearParts,$list from text(#yearNum," "),"Delete","Local")
+    set(#yearNum,$trim($list item(%yearParts,0)),"Local")
+    clear list(%months)
+    add list to list(%months,$list from text("Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",","),"Delete","Local")
+    set(#monthIdx,$subtract(#monthNum,1),"Local")
+    set(#monthAbbr,$list item(%months,#monthIdx),"Local")
+    set(#todayStr,"{#monthAbbr} {#dayNum} {#yearNum}","Local")
+    set(#todayMarker,"Send Text on {#todayStr}","Global")
+    comment(" return(#todayMarker)")
+    return(#todayStr)
 }

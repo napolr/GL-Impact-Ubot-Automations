@@ -1,8 +1,30 @@
-comment("--- Update #counterLeft / #counterRight from page ---")
-define UpdateCounterFromPage {
-    set(#counterText,$trim($strip tags($scrape attribute(<class="col-xs-3 text-center fbold pdrht0p">,"innertext"))),"Global")
-    clear list(%counterParts)
-    add list to list(%counterParts,$list from text(#counterText,"/"),"Delete","Global")
-    set(#counterLeft,$trim($list item(%counterParts,0)),"Global")
-    set(#counterRight,$trim($list item(%counterParts,1)),"Global")
+define InitiateCall {
+    comment("=== 5. Dial: mobile preferred, else home ===")
+    if($exists(<id="cellPhCallButton">)) {
+        then {
+            log("Clicking Call Mobile...")
+            if($not($comparison(#debug,"=","true"))) {
+                then {
+                    click(<id="cellPhCallButton">,"Left Click","No")
+                    wait(3)
+                }
+            }
+        }
+        else {
+            if($exists(<id="phoneCallButton">)) {
+                then {
+                    log("No mobile number - clicking Call Home...")
+                    if($not($comparison(#debug,"=","true"))) {
+                        then {
+                            click(<id="phoneCallButton">,"Left Click","No")
+                            wait(3)
+                        }
+                    }
+                }
+                else {
+                    log("No Call Mobile or Call Home link found - skipping dial")
+                }
+            }
+        }
+    }
 }

@@ -1,0 +1,17 @@
+define $WaitForDetailPage(#timeout) {
+    wait for element(<onclick="location.href='/Lead/BackToInbox'">,#timeout,"")
+    wait(1)
+    set(#isDetailPage,#false,"Local")
+    if($not($exists(<onclick="location.href='/Lead/BackToInbox'">))) {
+        then {
+            alert("Timed out waiting for detail page to reappear - stopping")
+            set(#hasNext,"No","Global")
+            log("detail page not found!!!")
+            set(#isDetailPage,#false,"Local")
+        }
+        else {
+            set(#isDetailPage,#true,"Local")
+        }
+    }
+    return(#isDetailPage)
+}

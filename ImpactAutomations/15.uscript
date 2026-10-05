@@ -1,48 +1,19 @@
-comment("=====================================================")
-comment("=== MAIN LOOP MODULE ===")
-comment("=====================================================")
-comment("--- Process all records in the direction set by #startAtBottom ---")
-define ProcessRecords {
-    set(#count,0,"Global")
-    set(#hasNext,"Yes","Global")
-    loop while($both($comparison(#count,"<",#maxLeads),$comparison(#hasNext,"=","Yes"))) {
-        increment(#count)
-        log("Processing record {#count} of {#maxLeads}")
-        comment("=== Guard: confirm the detail page is actually loaded ===")
-        set(#isReady,#false,"Global")
-        set(#isReady,$WaitForDetailPage(60),"Global")
-        log("Is Ready={#isReady}")
-        if($comparison(#isReady,"=",#false)) {
-            then {
-                log("Detail page not found. Stopping.")
-                set(#hasNext,"No","Global")
-            }
-            else {
-                log("=== 1. Scrape the record ===")
-                ScrapeLeadDetail()
-                log("=== 2. Decide if it should be skipped ===")
-                EvaluateSkipRecord()
-                log("=== 3. If not skipped: call + wait for disposition ===")
-                if($comparison(#skipRecord,"=","No")) {
-                    then {
-                        InitiateCall()
-                        log("Got Here _ After Initiate Call - calling wait for detail page")
-                        set(#isReady,$WaitForDetailPage(1200),"Global")
-                        log("Got Here _ After Wiat foredetail page")
-                    }
-                    else {
-                        log("Record {#count}: skipped (recent activity or future appointment)")
-                    }
-                }
-                log("=== 4. Advance to next record (direction-aware) ===")
-                if($both($comparison(#count,"<",#maxLeads),$comparison(#hasNext,"=","Yes"))) {
-                    then {
-                        AdvanceToNextRecord()
-                    }
-                }
-                log("=== 5. Check for end of list ===")
-                CheckEndOfList()
-            }
-        }
-    }
+define $getTodayMarker {
+    set(#rawDate,$date,"Local")
+    clear list(%dateParts)
+    add list to list(%dateParts,$list from text(#rawDate,"/"),"Delete","Local")
+    set(#monthNum,$trim($list item(%dateParts,0)),"Local")
+    set(#dayNum,$trim($list item(%dateParts,1)),"Local")
+    set(#yearNum,$trim($list item(%dateParts,2)),"Local")
+    clear list(%yearParts)
+    add list to list(%yearParts,$list from text(#yearNum," "),"Delete","Local")
+    set(#yearNum,$trim($list item(%yearParts,0)),"Local")
+    clear list(%months)
+    add list to list(%months,$list from text("Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",","),"Delete","Local")
+    set(#monthIdx,$subtract(#monthNum,1),"Local")
+    set(#monthAbbr,$list item(%months,#monthIdx),"Local")
+    set(#todayStr,"{#monthAbbr} {#dayNum} {#yearNum}","Local")
+    set(#todayMarker,"Send Text on {#todayStr}","Global")
+    comment(" return(#todayMarker)")
+    return(#todayStr)
 }

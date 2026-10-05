@@ -1,16 +1,115 @@
-define $WaitForDetailPage(#timeout) {
-    log($add("WaitForDetailPage ... timeout=",#timeout))
-    set(#onDetailPage,"false","Global")
-    wait for element(<onclick="location.href='/Lead/BackToInbox'">,#timeout,"Appear")
-    if($exists(<onclick="location.href='/Lead/BackToInbox'">)) {
-        then {
-            set(#onDetailPage,#true,"Global")
+comment("=====================================================")
+comment("=== RECORD MODULES ===")
+comment("=====================================================")
+comment("--- Scrape record data from the page ---")
+define ScrapeCurrentRecord {
+    set(#pageData,$ScrapeRecord(),"Global")
+    log("Calling ScrapeLeadDetail")
+    ScrapeLeadDetail()
+    log("Done Calling ScrapeLeadDetail")
+    set(#groupField,$GetTableValue("Group"),"Global")
+    set(#typeField,$GetTableValue("Type"),"Global")
+    set(#statusField,$GetTableValue("Status"),"Global")
+    log("Record {#count}: group={#groupField} type={#typeField} status={#statusField}")
+}
+define $ScrapeRecord {
+    run javascript("document.querySelector('#LeadTable tbody tr td a').click();")
+    wait for element(<id="primaryPanel">,30,"")
+    set(#data,$scrape attribute(<id="primaryPanel">,"innertext"),"Global")
+    log("Pagedata scraped")
+    return(#data)
+}
+define ScrapeLeadDetail {
+    comment("=== Grab whole panel text in one shot ===")
+    set(#pageData,$scrape attribute(<id="primaryPanel">,"innertext"),"Global")
+    comment("=== Split pageData into lines once ===")
+    clear list(%lines)
+    add list to list(%lines,$list from text(#pageData,$new line),"Delete","Global")
+    comment("=== Name — first non-empty line, strip trailing 'edit' ===")
+    set(#leadName,"","Global")
+    set(#i,0,"Global")
+    loop($list total(%lines)) {
+        if($both($comparison(#leadName,"=",""),$not($comparison($trim($list item(%lines,#i)),"","")))) {
+            then {
+                set(#leadName,$trim($replace($list item(%lines,#i),"edit","")),"Global")
+            }
         }
-        else {
-            log("detail page not found!!!")
-            set(#onDetailPage,#false,"Global")
-        }
+        increment(#i)
     }
-    log($add("Reutrning ondetailpage=",#onDetailPage))
-    return(#onDetailPage)
+    comment("=== Initialize all fields ===")
+    set(#leadLanguage,"","Global")
+    set(#leadMobile,"","Global")
+    set(#leadHome,"","Global")
+    set(#leadEmail,"","Global")
+    comment("=== Extract label-based fields line by line ===")
+    set(#i,0,"Global")
+    loop($list total(%lines)) {
+        set(#line,$list item(%lines,#i),"Global")
+        if($contains(#line,"Language:")) {
+            then {
+                set(#leadLanguage,$trim($replace(#line,"Language:","")),"Global")
+            }
+        }
+        if($contains(#line,"Mobile:")) {
+            then {
+                set(#leadMobile,$trim($replace(#line,"Mobile:","")),"Global")
+            }
+        }
+        if($contains(#line,"Home:")) {
+            then {
+                set(#leadHome,$trim($replace(#line,"Home:","")),"Global")
+            }
+        }
+        if($contains(#line,"Email:")) {
+            then {
+                set(#leadEmail,$trim($replace(#line,"Email:","")),"Global")
+            }
+        }
+        increment(#i)
+    }
+    comment("=== Address — lines after Email and before 'Map It' ===")
+    set(#leadStreet,"","Global")
+    set(#leadCity,"","Global")
+    set(#capturing,"No","Global")
+    set(#i,0,"Global")
+    loop($list total(%lines)) {
+        set(#line,$trim($list item(%lines,#i)),"Global")
+        if($contains(#line,"Email:")) {
+            then {
+                set(#capturing,"Yes","Global")
+            }
+        }
+        if($comparison(#capturing,"=","Yes")) {
+            then {
+                if($contains(#line,"Map It")) {
+                    then {
+                        set(#capturing,"No","Global")
+                    }
+                }
+                else {
+                    if($both($not($comparison(#line,"","")),$not($contains(#line,"Email:")))) {
+                        then {
+                            if($comparison(#leadStreet,"=","")) {
+                                then {
+                                    set(#leadStreet,$trim($replace(#line,"edit public","")),"Global")
+                                }
+                                else {
+                                    if($comparison(#leadCity,"=","")) {
+                                        then {
+                                            set(#leadCity,#line,"Global")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        increment(#i)
+    }
+    comment("=== Fix HTML-encoded ampersands ===")
+    set(#leadStreet,$replace(#leadStreet,"&amp;","&"),"Global")
+    set(#leadCity,$replace(#leadCity,"&amp;","&"),"Global")
+    set(#leadEmail,$replace(#leadEmail,"&amp;","&"),"Global")
 }
