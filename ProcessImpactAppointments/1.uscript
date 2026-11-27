@@ -1,0 +1,29 @@
+define ProcessOneBlock {
+    alert("Running  ProcessOneBlock")
+    comment("Build the prompt from instructions + block HTML")
+    set(#openaiPrompt,"{#promptTemplate}{$new line}{$new line}{#blockText}","Global")
+    comment("Call the AI")
+    CallOpenAI()
+    comment("Split the pipe-delimited AI response into fields")
+    clear list(%aiFields)
+    add list to list(%aiFields,$list from text(#openaiResponseText,"|"),"Delete","Global")
+    set(#nameRaw,$list item(%aiFields,0),"Global")
+    set(#phoneRaw,$list item(%aiFields,1),"Global")
+    set(#apptTime,$list item(%aiFields,2),"Global")
+    set(#addressRaw,$list item(%aiFields,3),"Global")
+    set(#apptId,$list item(%aiFields,4),"Global")
+    set(#leadId,$list item(%aiFields,5),"Global")
+    set(#apptDate,$date format("yyyy-MM-dd"),"Global")
+    comment("Build the row and add it to the master list")
+    set(#row,"{#nameRaw}|{#phoneRaw}|{#apptTime}|{#apptDate}|{#addressRaw}|{#apptId}|{#leadId}","Global")
+    add item to list(%allAppointments,#row,"","")
+    alert("Row {#bIdx}: {#row}")
+    comment("If this appointment is virtual, also add to the virtual list")
+    if($comparison(#containsVirtual,"=","true")) {
+        AddToVirtualList()
+        then {
+        }
+        else {
+        }
+    }
+}

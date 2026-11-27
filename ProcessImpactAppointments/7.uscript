@@ -1,0 +1,13 @@
+define ProcessCallBacks {
+    set list position(%allAppointments,0)
+    loop($list total(%allAppointments)) {
+        set(#row,$next list item(%allAppointments),"Global")
+        if($contains(#row,"CallBack|")) {
+            comment("Add to task list, or create calendar event, or whatever")
+            then {
+            }
+            else {
+            }
+        }
+    }
+}

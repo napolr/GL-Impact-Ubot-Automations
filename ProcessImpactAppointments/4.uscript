@@ -1,0 +1,31 @@
+define ProcessQueue {
+    set list position(%virtualAppointments,0)
+    set(#vIdx,0,"Global")
+    loop($list total(%virtualAppointments)) {
+        set(#row,$next list item(%virtualAppointments),"Global")
+        clear list(%fields)
+        add list to list(%fields,$list from text(#row,"|"),"Delete","Global")
+        set(#apptType,$list item(%fields,0),"Global")
+        set(#isVirtual,$list item(%fields,1),"Global")
+        set(#apptName,$list item(%fields,2),"Global")
+        set(#phone,$list item(%fields,3),"Global")
+        set(#apptTime,$list item(%fields,4),"Global")
+        set(#apptDate,$list item(%fields,5),"Global")
+        set(#address,$list item(%fields,6),"Global")
+        set(#dayIdx,$list item(%fields,7),"Global")
+        set(#leadId,$list item(%fields,8),"Global")
+        set(#apptId,$list item(%fields,9),"Global")
+        if($or($comparison(#testMode,"=","false"), $contains($upper case(#apptName),#testName))) {
+            ProcessOneRow()
+            then {
+            }
+            else {
+            }
+        }
+        increment(#vIdx)
+    }
+}
+define SaveQueue {
+    save to file("C:\\ubot\\queue.txt",%virtualAppointments)
+}
+clear list(%nameParts)

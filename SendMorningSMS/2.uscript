@@ -1,0 +1,7 @@
+define scheduleCallBack {
+    set(#url,"https://mobile.impact.ailife.com/Lead/SetAppointment?appointmenttype=CallBack&leadid={#leadid}","Global")
+    navigate(#url,"Wait")
+    wait for element(<onclick="CreateAllDayAppointment(this)">,60,"Appear")
+    click(<onclick="CreateAllDayAppointment(this)">,"Left Click","No")
+    wait for element(<onclick="location.href='/Lead/BackToInbox'">,60,"Appear")
+}

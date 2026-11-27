@@ -1,0 +1,131 @@
+define RunMain {
+    comment("=====================================================")
+    comment("=== MAIN ===")
+    comment("=====================================================")
+    clear all data
+    set(#todayMarker,$getTodayMarker(),"Global")
+    comment("Today's marker: {#todayMarker}")
+    comment("=== Navigate to Lead Inbox ===")
+    set(#url,"https://mobile.impact.ailife.com/Lead/Inbox","Global")
+    navigate(#url,"Wait")
+    wait for element(<href=w"*InboxDetail*">,60,"Appear")
+    comment("=== Open first lead ===")
+    click($element offset(<href=w"*InboxDetail*">,0),"Left Click","No")
+    wait for element(<onclick="location.href='/Lead/BackToInbox'">,60,"Appear")
+    comment("=== Main processing loop ===")
+    set(#hasNext,"Yes","Global")
+    set(#count,0,"Global")
+    set(#maxLeads,100,"Global")
+    loop while($both($comparison(#hasNext,"=","Yes"),$comparison(#count,"<",#maxLeads))) {
+        comment("Top of Main loop")
+        comment("=== 1. Wait for Detail page – built-in element wait only ===")
+        wait for element(<onclick="location.href='/Lead/BackToInbox'">,120,"Appear")
+        set(#isReady,$exists(<onclick="location.href='/Lead/BackToInbox'">),"Global")
+        if($comparison(#isReady,"=","false")) {
+            then {
+                alert("Detail page not found after 60 seconds. Please navigate manually or restart the script.")
+                set(#hasNext,"No","Global")
+            }
+            else {
+                comment("=== 2. Scrape / process the CURRENT record ===")
+                set(#pageData,$scrape attribute(<id="primaryPanel">,"innertext"),"Global")
+                comment("=== 3. Skip if already texted today ===")
+                if($either($contains(#pageData,#todayMarker),$contains(#pageData,"Virtual"))) {
+                    then {
+                        set(#skipRecord,"Yes","Global")
+                        comment("Record {#count}: already texted today — skipping")
+                    }
+                    else {
+                        comment("=== 4. Extract phone numbers ===")
+                        set(#mobileBlock,$page scrape("Mobile:","Home:"),"Global")
+                        set(#mobile,$trim($strip tags(#mobileBlock)),"Global")
+                        set(#homeBlock,$page scrape("Home:","Email:"),"Global")
+                        set(#home,$trim($strip tags($replace(#homeBlock,"Home:",""))),"Global")
+                        if($comparison($trim(#mobile),"=","")) {
+                            then {
+                                set(#primaryPhoneRaw,$trim(#home),"Global")
+                            }
+                            else {
+                                set(#primaryPhoneRaw,$trim(#mobile),"Global")
+                            }
+                        }
+                        comment("=== 5. URL-encode the phone ===")
+                        set(#primaryPhoneEnc,#primaryPhoneRaw,"Global")
+                        set(#primaryPhoneEnc,$replace(#primaryPhoneEnc,"(","%28"),"Global")
+                        set(#primaryPhoneEnc,$replace(#primaryPhoneEnc,")","%29"),"Global")
+                        set(#primaryPhoneEnc,$replace(#primaryPhoneEnc," ","%20"),"Global")
+                        comment("=== 6. Get leadid from URL ===")
+                        set(#leadid,$replace($url,"https://mobile.impact.ailife.com/Lead/InboxDetail?LeadId=",""),"Global")
+                        comment("=== 7. Click Send Text link ===")
+                        if($exists(<href=w"*CheckInSendText*">)) {
+                            then {
+                                click($element offset(<href=w"*CheckInSendText*">,0),"Left Click","No")
+                                wait for element(<onclick="SendText(); return false;">,130,"Appear")
+                            }
+                        }
+                        comment("=== 8. Navigate to WhatHappend ===")
+                        set(#url,"https://mobile.impact.ailife.com/Lead/WhatHappend?LeadId={#leadid}&PrimaryPhone={#primaryPhoneEnc}&callId=-2","Global")
+                        navigate(#url,"Wait")
+                        if($exists(<onclick="SendText(); return false;">)) {
+                            then {
+                                click($element offset(<onclick="SendText(); return false;">,0),"Left Click","No")
+                                wait for element(<onclick="location.href='/Lead/BackToInbox'">,120,"Appear")
+                            }
+                        }
+                        comment("=== 9. Fallback: Call Back disposition if SendText failed ===")
+                        set(#isReady,$exists(<onclick="location.href='/Lead/BackToInbox'">),"Global")
+                        if($comparison(#isReady,"=","false")) {
+                            then {
+                                scheduleCallBack()
+                                wait for element(<onclick="location.href='/Lead/BackToInbox'">,60,"Appear")
+                                if($comparison($exists(<onclick="location.href='/Lead/BackToInbox'">),"=","false")) {
+                                    then {
+                                        alert("Automated disposition failed — please choose manually")
+                                        wait for element(<onclick="location.href='/Lead/BackToInbox'">,60,"Appear")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                comment("=== 10. Read the record counter ===")
+                set(#counterText,$trim($strip tags($scrape attribute(<class="col-xs-3 text-center fbold pdrht0p">,"innertext"))),"Global")
+                clear list(%counterParts)
+                add list to list(%counterParts,$list from text(#counterText,"/"),"Delete","Global")
+                set(#counterLeft,$trim($list item(%counterParts,0)),"Global")
+                set(#counterRight,$trim($list item(%counterParts,1)),"Global")
+                comment("=== 11. End of list check ===")
+                if($both($comparison(#counterLeft,"=",#counterRight),$not($comparison(#counterLeft,"=","")))) {
+                    then {
+                        alert("Reached end of list at record {#count}")
+                        set(#hasNext,"No","Global")
+                    }
+                }
+                increment(#count)
+                comment("=== 12. Advance to NEXT lead (only if more records remain) ===")
+                if($comparison(#hasNext,"=","Yes")) {
+                    then {
+                        if($exists(<onclick=w"*/Lead/MoveNext*">)) {
+                            then {
+                                click($element offset(<onclick=w"*/Lead/MoveNext*">,0),"Left Click","No")
+                                wait for element(<onclick="location.href='/Lead/BackToInbox'">,30,"Appear")
+                                set(#moved,$exists(<onclick="location.href='/Lead/BackToInbox'">),"Global")
+                                if($comparison(#moved,"=","false")) {
+                                    then {
+                                        alert("MoveNext landed on non-detail page — aborting loop")
+                                        set(#hasNext,"No","Global")
+                                    }
+                                }
+                            }
+                            else {
+                                alert("No MoveNext button — reached end of list")
+                                set(#hasNext,"No","Global")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+RunMain()

@@ -1,0 +1,6 @@
+define $GetTableValue(#rowLabel) {
+    set(#startMarker,">{#rowLabel}</th>","Local")
+    set(#rawValue,$page scrape(#startMarker,"</td>"),"Local")
+    set(#cleanValue,$trim($strip tags(#rawValue)),"Local")
+    return(#cleanValue)
+}

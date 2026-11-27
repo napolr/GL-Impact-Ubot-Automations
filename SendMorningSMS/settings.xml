@@ -1,0 +1,78 @@
+<Settings>
+  <Version>8</Version>
+  <CodeVersion>1</CodeVersion>
+  <TableDelimeter>,</TableDelimeter>
+  <CompiledBotWidth>950</CompiledBotWidth>
+  <CompiledBotHeight>650</CompiledBotHeight>
+  <CompiledBotStartupMode>Normal</CompiledBotStartupMode>
+  <CompiledBotCaptchaServicesIncluded>Included</CompiledBotCaptchaServicesIncluded>
+  <CompiledBotOutputFile></CompiledBotOutputFile>
+  <CompiledBotUIColor></CompiledBotUIColor>
+  <CompiledBotUIColorEnabled>false</CompiledBotUIColorEnabled>
+  <CompiledBotBackgroundTabColor></CompiledBotBackgroundTabColor>
+  <CompiledBotBackgroundTabColorEnabled>false</CompiledBotBackgroundTabColorEnabled>
+  <CompiledBotMenuColor></CompiledBotMenuColor>
+  <CompiledBotMenuColorEnabled>false</CompiledBotMenuColorEnabled>
+  <CompiledBotActiveTabColor></CompiledBotActiveTabColor>
+  <CompiledBotActiveTabColorEnabled>false</CompiledBotActiveTabColorEnabled>
+  <CompiledBotInactiveTabColor></CompiledBotInactiveTabColor>
+  <CompiledBotInactiveTabColorEnabled>false</CompiledBotInactiveTabColorEnabled>
+  <CompiledBotMouseoverTabColor></CompiledBotMouseoverTabColor>
+  <CompiledBotMouseoverTabColorEnabled>false</CompiledBotMouseoverTabColorEnabled>
+  <CompiledBotRemoveBranding>false</CompiledBotRemoveBranding>
+  <CompiledBotHideRunBar>false</CompiledBotHideRunBar>
+  <CompiledBotHideNavigationBar>false</CompiledBotHideNavigationBar>
+  <CompiledBotHideBrowser>false</CompiledBotHideBrowser>
+  <CompiledBotHideMenu>false</CompiledBotHideMenu>
+  <CompiledBotHideWindow>false</CompiledBotHideWindow>
+  <CompiledBotAffiliateNumber />
+  <CompiledBotSplashPage></CompiledBotSplashPage>
+  <CompiledBotOutputFile></CompiledBotOutputFile>
+  <CompiledBotIcon></CompiledBotIcon>
+  <CompiledBotLicenseAgreement></CompiledBotLicenseAgreement>
+  <CompiledBotSoftwareName>Software Name</CompiledBotSoftwareName>
+  <CompiledBotBannerImage></CompiledBotBannerImage>
+  <CompiledBotSetupOutputFile></CompiledBotSetupOutputFile>
+  <CompiledBotIncludedInterfaces>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+    <CompiledBotIncludedInterface>Browser</CompiledBotIncludedInterface>
+  </CompiledBotIncludedInterfaces>
+  <CompiledBotSchedulableCommands />
+  <Scripts>
+    <Script name="RunMain" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+    <Script name="getTodayMarker" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+    <Script name="scheduleCallBack" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+    <Script name="ScrapeRecord" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+    <Script name="GetMaxLeads" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+    <Script name="GetTableValue" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+    <Script name="main" type="Normal" isHidden="false">
+      <UIEditorJson></UIEditorJson>
+      <UIEditorHtml></UIEditorHtml>
+    </Script>
+  </Scripts>
+  <Schedule />
+</Settings>

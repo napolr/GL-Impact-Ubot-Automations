@@ -1,0 +1,3 @@
+define AddToVirtualList {
+    add item to list(%virtualAppointments,#row,"","")
+}

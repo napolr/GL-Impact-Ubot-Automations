@@ -1,0 +1,18 @@
+define $GetMaxLeads {
+    comment("Scrapes the total number of leads from the DataTables info element")
+    set(#maxLeads,100,"Local")
+    if($exists(<id="LeadTable_info">)) {
+        then {
+            set(#infoText,$scrape attribute(<id="LeadTable_info">,"innertext"),"Local")
+            alert("DataTables info: {#infoText}")
+            set(#maxLeadsRaw,$find regular expression(#infoText,"of [0-9]+"),"Local")
+            set(#maxLeadsRaw,$replace(#maxLeadsRaw,"of ",""),"Local")
+            set(#maxLeads,$trim(#maxLeadsRaw),"Local")
+            alert("Total leads found: {#maxLeads}")
+        }
+        else {
+            alert("Could not find LeadTable_info – using default maxLeads = 100")
+        }
+    }
+    return(#maxLeads)
+}
